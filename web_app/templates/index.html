@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coast Guard Award Writing Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/coast_guard_logo.png') }}" alt="Coast Guard Logo" onerror="this.src='{{ url_for('static', filename='img/placeholder_logo.png') }}'">
+                <h1>Coast Guard Award Writing Tool</h1>
+            </div>
+            <div class="session-controls">
+                <button id="newSessionBtn" class="btn">New Session</button>
+                <button id="saveSessionBtn" class="btn">Save Session</button>
+                <input type="text" id="sessionIdInput" placeholder="Session ID">
+                <button id="loadSessionBtn" class="btn">Load Session</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="content-container">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Messages will be inserted here -->
+                    </div>
+                    <div class="chat-input">
+                        <textarea id="userInput" placeholder="Type your message here..." rows="3"></textarea>
+                        <button id="sendBtn" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+
+                <div class="award-container" id="awardContainer">
+                    <div class="award-header">
+                        <h2>Award Recommendation</h2>
+                        <button id="generateBtn" class="btn btn-secondary">Generate Recommendation</button>
+                    </div>
+                    <div class="award-content" id="awardContent">
+                        <!-- Award recommendation will be inserted here -->
+                        <div class="placeholder-text">
+                            <p>Complete the chat conversation to receive an award recommendation.</p>
+                        </div>
+                    </div>
+                    <div class="award-actions">
+                        <button id="exportBtn" class="btn">Export</button>
+                        <button id="printBtn" class="btn">Print</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Based on Coast Guard Military Medals and Awards Manual (COMDTINST M1650.25E) and Coast Guard Civilian Awards Manual (COMDTINST M12451.1C)</p>
+            <p>This tool provides objective award recommendations based on accomplishments, not rank.</p>
+        </footer>
+    </div>
+
+    <!-- Templates for dynamic content -->
+    <template id="messageTpl">
+        <div class="message">
+            <div class="message-content"></div>
+            <div class="message-time"></div>
+        </div>
+    </template>
+
+    <template id="awardTpl">
+        <div class="award-recommendation">
+            <h3 class="award-title"></h3>
+            <div class="award-explanation"></div>
+        </div>
+    </template>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coast Guard Award Writing Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/cg-tools.png') }}" alt="Coast Guard Logo" class="logo-image">
+                <h1>Coast Guard Award Writing Tool</h1>
+            </div>
+            <div class="session-controls">
+                <button id="clearSessionBtn" class="btn">Clear Session</button>
+            </div>
+        </header>
+
+        <!-- Awardee Information -->
+        <section class="awardee-info">
+            <div class="awardee-field">
+                <label for="awardeeName">Awardee Name:</label>
+                <input type="text" id="awardeeName" placeholder="Full Name">
+            </div>
+            <div class="awardee-field">
+                <label for="awardeeRank">Rank:</label>
+                <input type="text" id="awardeeRank" placeholder="Rank/Grade">
+            </div>
+            <div class="awardee-field">
+                <label for="dateRangeStart">Date Range:</label>
+                <input type="date" id="dateRangeStart">
+            </div>
+            <div class="awardee-field">
+                <label for="dateRangeEnd">to</label>
+                <input type="date" id="dateRangeEnd">
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main>
+            <div class="content-container">
+                <!-- Chat Section -->
+                <section class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <!-- Messages will be added here dynamically -->
+                    </div>
+                    <div class="chat-input">
+                        <textarea id="userInput" placeholder="Enter accomplishments here..." rows="3"></textarea>
+                        <button id="sendBtn" class="btn btn-primary">Send</button>
+                    </div>
+                </section>
+
+                <!-- Award Section -->
+                <section class="award-container">
+                    <div class="award-header">
+                        <h2>Award Recommendation</h2>
+                        <div class="award-actions-top">
+                            <button id="generateBtn" class="btn btn-secondary">Generate Recommendation</button>
+                            <button id="refreshBtn" class="btn btn-secondary">Refresh Recommendation</button>
+                            <button id="improveBtn" class="btn">Improve</button>
+                            <button id="finalizeBtn" class="btn btn-primary">Finalize Award</button>
+                        </div>
+                    </div>
+                    <div id="awardContent" class="award-content">
+                        <div class="placeholder-text">
+                            <p>📝 <strong>How to use:</strong> First describe your achievements in the chat above, then click "Generate Recommendation"</p>
+                        </div>
+                    </div>
+                    <div class="award-actions">
+                        <button id="exportBtn" class="btn">Export</button>
+                        <button id="printBtn" class="btn">Print</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2024 U.S. Coast Guard Award Writing Tool</p>
+        </footer>
+    </div>
+
+    <!-- Templates -->
+    <template id="messageTpl">
+        <div class="message">
+            <div class="message-content"></div>
+            <div class="message-time"></div>
+        </div>
+    </template>
+
+    <template id="awardTpl">
+        <div class="award-recommendation">
+            <h3 class="award-title"></h3>
+            <div class="award-explanation"></div>
+            <div class="award-scores"></div>
+            <div class="improvement-suggestions"></div>
+        </div>
+    </template>
+
+    <template id="finalAwardTpl">
+        <div class="final-award">
+            <h3 class="award-title"></h3>
+            <div class="award-citation"></div>
+        </div>
+    </template>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

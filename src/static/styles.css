@@ -1,0 +1,423 @@
+/* Main Styles for Coast Guard Award Writing Tool */
+
+:root {
+    --primary-color: #002D62; /* Coast Guard Blue */
+    --secondary-color: #E35205; /* Coast Guard Orange */
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-color: #dee2e6;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --gray-color: #6c757d;
+    --light-gray: #e9ecef;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: var(--light-gray);
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Styles */
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 50px;
+    margin-right: 1rem;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    /* Fix for flickering title */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+.session-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Awardee Info Styles */
+.awardee-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--light-color);
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    z-index: 99;
+}
+
+.awardee-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.awardee-field label {
+    font-weight: 500;
+    min-width: 100px;
+}
+
+.awardee-field input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    min-width: 200px;
+}
+
+.awardee-field input[type="date"] {
+    min-width: 150px;
+}
+
+/* Main Content Styles */
+main {
+    flex: 1;
+    padding: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.content-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 992px) {
+    .content-container {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Chat Styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: var(--light-color);
+}
+
+.message {
+    margin-bottom: 1rem;
+    max-width: 80%;
+    position: relative;
+}
+
+.message.user {
+    margin-left: auto;
+    background-color: #DCF8C6;
+    border-radius: 10px 0 10px 10px;
+    padding: 0.75rem;
+}
+
+.message.assistant {
+    margin-right: auto;
+    background-color: white;
+    border-radius: 0 10px 10px 10px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: var(--gray-color);
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.chat-input {
+    display: flex;
+    padding: 0.5rem;
+    background-color: white;
+    border-top: 1px solid var(--border-color);
+}
+
+.chat-input textarea {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    resize: none;
+    font-family: inherit;
+}
+
+.chat-input button {
+    margin-left: 0.5rem;
+}
+
+/* Award Styles */
+.award-container {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+}
+
+.award-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.award-actions-top {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.award-content {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.award-recommendation {
+    background-color: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 1rem;
+}
+
+.award-title {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--secondary-color);
+}
+
+.award-explanation {
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.improvement-suggestions {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--secondary-color);
+    padding: 1rem;
+    margin-top: 1.5rem;
+}
+
+.improvement-suggestions h4 {
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.award-explanation h4 {
+    margin-top: 1rem;
+    color: var(--primary-color);
+}
+
+.award-explanation ul, .improvement-suggestions ul {
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.final-award {
+    background-color: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 1rem;
+}
+
+.award-citation {
+    line-height: 1.8;
+    white-space: pre-line;
+    margin-top: 1rem;
+}
+
+.award-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: var(--light-color);
+    border-top: 1px solid var(--border-color);
+}
+
+.placeholder-text {
+    color: var(--gray-color);
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Button Styles */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+}
+
+.btn:hover {
+    background-color: var(--border-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #001f44;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #c44600;
+}
+
+/* Initially hide some buttons */
+#refreshBtn, #improveBtn, #finalizeBtn {
+    display: none;
+}
+
+/* Footer Styles */
+footer {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.875rem;
+    position: relative;
+    z-index: 98;
+}
+
+/* Input Styles */
+input[type="text"] {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-family: inherit;
+}
+
+#sessionNameInput {
+    min-width: 200px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .logo {
+        margin-bottom: 1rem;
+    }
+    
+    .session-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .awardee-info {
+        flex-direction: column;
+    }
+    
+    .chat-container, .award-container {
+        height: 60vh;
+    }
+    
+    .award-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .award-actions-top {
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+}
+
+/* Placeholder image for logo */
+.placeholder-logo {
+    background-color: var(--light-gray);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-color);
+    font-weight: bold;
+    border-radius: 5px;
+}
+/* Logo styling */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-image {
+    height: 250px; /* Adjust size as needed */
+    width: auto;
+    object-fit: contain;
+}
+
+/* Remove or update the placeholder-logo styles since we're not using it anymore */
+.placeholder-logo {
+    display: none; /* Hide the placeholder */
+}

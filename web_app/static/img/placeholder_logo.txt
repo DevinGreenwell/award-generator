@@ -1,0 +1,3 @@
+# Coast Guard Award Writing Tool - Placeholder Logo
+
+This is a simple placeholder logo for the Coast Guard Award Writing Tool. In a production environment, this would be replaced with an official Coast Guard logo or a custom-designed logo for the application.
