@@ -1,12 +1,25 @@
 import openai
 import os
-import json
 import re
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, session
+from io import BytesIO
+import json
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, session, send_file, make_response
 from .award_engine import AwardEngine
 from dotenv import load_dotenv
 load_dotenv()
+
+try:
+    from docx import Document
+    from docx.shared import Inches, Pt
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.style import WD_STYLE_TYPE
+    from docx.oxml.shared import OxmlElement, qn
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+    print("Warning: python-docx not installed. DOCX export will not be available.")
 
 # Configure Flask app with proper static/template folders
 app = Flask(__name__, 
@@ -650,29 +663,425 @@ def api_finalize():
 # Keep all other routes the same
 @app.route('/api/export', methods=['POST'])
 def api_export():
-    data = request.get_json()
-    awardee_info = data.get('awardee_info', {})
-    
-    # Get current state
-    finalized = session.get('finalized_award')
-    recommendation = session.get('recommendation')
-    
-    if finalized:
+    """Generate export data in multiple formats including DOCX"""
+    try:
+        data = request.get_json()
+        export_format = data.get('format', 'docx')  # Default to docx
+        
+        # Gather all session data
+        finalized = session.get('finalized_award')
+        recommendation = session.get('recommendation')
+        achievement_data = session.get('achievement_data', {})
+        awardee_info = session.get('awardee_info', {})
+        messages = session.get('messages', [])
+        
+        # Prepare export data
+        export_data = {
+            'generated_at': datetime.now().isoformat(),
+            'awardee_info': awardee_info,
+            'messages': messages,
+            'achievement_data': achievement_data,
+            'recommendation': recommendation,
+            'finalized_award': finalized
+        }
+        
+        # Generate filename
+        name = awardee_info.get('name', 'Unknown').replace(' ', '_')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        if export_format == 'docx':
+            if not DOCX_AVAILABLE:
+                return jsonify({
+                    'success': False,
+                    'error': 'DOCX export not available. Please install python-docx.'
+                }), 500
+            
+            filename = f"award_package_{name}_{timestamp}.docx"
+            file_data = generate_docx_export(export_data)
+            
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'download_url': '/api/export/download/docx',
+                'format': 'docx'
+            })
+            
+        elif export_format == 'json':
+            filename = f"award_package_{name}_{timestamp}.json"
+            content = json.dumps(export_data, indent=2, default=str)
+            mimetype = 'application/json'
+            
+        elif export_format == 'txt':
+            filename = f"award_package_{name}_{timestamp}.txt"
+            content = generate_text_export(export_data)
+            mimetype = 'text/plain'
+            
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Unsupported export format: {export_format}'
+            }), 400
+        
+        # For non-DOCX formats, return content directly
+        if export_format != 'docx':
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'content': content,
+                'mimetype': mimetype,
+                'size': len(content.encode('utf-8'))
+            })
+        
+    except Exception as e:
+        print(f"Error in export endpoint: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
-            'award': finalized['award'],
-            'citation': finalized['citation']
-        })
-    elif recommendation:
-        return jsonify({
-            'award': recommendation['award'],
-            'explanation': recommendation['explanation']
-        })
-    else:
-        return jsonify({
-            'award': 'No Award',
-            'explanation': 'No recommendation available'
-        })
+            'success': False,
+            'error': f'Export failed: {str(e)}'
+        }), 500
 
+@app.route('/api/export/download/docx', methods=['GET'])
+def download_docx():
+    """Download the generated DOCX file"""
+    try:
+        if not DOCX_AVAILABLE:
+            return jsonify({'error': 'DOCX export not available'}), 500
+        
+        # Get session data
+        finalized = session.get('finalized_award')
+        recommendation = session.get('recommendation')
+        achievement_data = session.get('achievement_data', {})
+        awardee_info = session.get('awardee_info', {})
+        messages = session.get('messages', [])
+        
+        export_data = {
+            'generated_at': datetime.now().isoformat(),
+            'awardee_info': awardee_info,
+            'messages': messages,
+            'achievement_data': achievement_data,
+            'recommendation': recommendation,
+            'finalized_award': finalized
+        }
+        
+        # Generate DOCX
+        doc_bytes = generate_docx_export(export_data)
+        
+        # Create filename
+        name = awardee_info.get('name', 'Unknown').replace(' ', '_')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"award_package_{name}_{timestamp}.docx"
+        
+        # Create response
+        response = make_response(doc_bytes)
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.headers['Content-Length'] = len(doc_bytes)
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error in DOCX download: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+def generate_docx_export(export_data):
+    """Generate a professionally formatted DOCX file"""
+    doc = Document()
+    
+    # Set up document margins and styles
+    sections = doc.sections
+    for section in sections:
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1.25)
+        section.right_margin = Inches(1.25)
+    
+    # Add custom styles
+    add_custom_styles(doc)
+    
+    # Get data
+    awardee_info = export_data.get('awardee_info', {})
+    finalized = export_data.get('finalized_award')
+    recommendation = export_data.get('recommendation')
+    achievement_data = export_data.get('achievement_data', {})
+    
+    # Document header
+    header = doc.add_heading('UNITED STATES COAST GUARD', 0)
+    header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    subheader = doc.add_heading('Award Recommendation Package', 1)
+    subheader.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    doc.add_paragraph()  # Spacing
+    
+    # Awardee Information Section
+    if awardee_info:
+        doc.add_heading('I. AWARDEE INFORMATION', 2)
+        
+        # Create a formatted table for awardee info
+        table = doc.add_table(rows=0, cols=2)
+        table.style = 'Table Grid'
+        
+        info_fields = [
+            ('Name', awardee_info.get('name', '')),
+            ('Rank/Rate', awardee_info.get('rank', '')),
+            ('Unit', awardee_info.get('unit', '')),
+            ('Position', awardee_info.get('position', '')),
+            ('EMPLID', awardee_info.get('service_number', '')),
+
+        ]
+        
+        for field, value in info_fields:
+            if value:
+                row = table.add_row()
+                row.cells[0].text = field + ':'
+                row.cells[1].text = str(value)
+                # Bold the field names
+                row.cells[0].paragraphs[0].runs[0].bold = True
+        
+        doc.add_paragraph()
+    
+    # Award Recommendation Section
+    award_name = ''
+    if finalized:
+        award_name = finalized.get('award', '')
+        doc.add_heading('II. FINAL AWARD RECOMMENDATION', 2)
+        
+        award_para = doc.add_paragraph()
+        award_para.add_run('Recommended Award: ').bold = True
+        award_para.add_run(award_name)
+        
+    elif recommendation:
+        award_name = recommendation.get('award', '')
+        doc.add_heading('II. AWARD RECOMMENDATION', 2)
+        
+        award_para = doc.add_paragraph()
+        award_para.add_run('Recommended Award: ').bold = True
+        award_para.add_run(award_name)
+    
+    doc.add_paragraph()
+    
+    # Citation Section
+    if finalized and finalized.get('citation'):
+        doc.add_heading('III. CITATION', 2)
+        citation_para = doc.add_paragraph(finalized.get('citation'))
+        citation_para.style = 'Citation'
+        doc.add_paragraph()
+    
+    # Achievement Summary
+    if achievement_data:
+        doc.add_heading('IV. ACHIEVEMENT SUMMARY', 2)
+        
+        # Key Achievements
+        achievements = achievement_data.get('achievements', [])
+        if achievements:
+            doc.add_heading('A. Key Achievements', 3)
+            for i, achievement in enumerate(achievements[:8], 1):  # Limit to 8
+                para = doc.add_paragraph(f"{i}. {achievement}")
+                para.style = 'List Number'
+            doc.add_paragraph()
+        
+        # Measurable Impact
+        impacts = achievement_data.get('impacts', [])
+        if impacts:
+            doc.add_heading('B. Measurable Impact', 3)
+            for impact in impacts[:6]:  # Limit to 6
+                para = doc.add_paragraph(impact, style='List Bullet')
+            doc.add_paragraph()
+        
+        # Leadership Details
+        leadership = achievement_data.get('leadership_details', [])
+        if leadership:
+            doc.add_heading('C. Leadership Demonstrated', 3)
+            for detail in leadership[:5]:
+                para = doc.add_paragraph(detail, style='List Bullet')
+            doc.add_paragraph()
+        
+        # Innovation and Initiative
+        innovations = achievement_data.get('innovation_details', [])
+        if innovations:
+            doc.add_heading('D. Innovation and Initiative', 3)
+            for innovation in innovations[:5]:
+                para = doc.add_paragraph(innovation, style='List Bullet')
+            doc.add_paragraph()
+        
+        # Challenges Overcome
+        challenges = achievement_data.get('challenges', [])
+        if challenges:
+            doc.add_heading('E. Challenges Overcome', 3)
+            for challenge in challenges[:5]:
+                para = doc.add_paragraph(challenge, style='List Bullet')
+            doc.add_paragraph()
+        
+        # Scope and Time Period
+        scope = achievement_data.get('scope', '')
+        time_period = achievement_data.get('time_period', '')
+        
+        if scope and scope != 'Not specified':
+            para = doc.add_paragraph()
+            para.add_run('Scope of Impact: ').bold = True
+            para.add_run(scope)
+        
+        if time_period and time_period != 'Not specified':
+            para = doc.add_paragraph()
+            para.add_run('Time Period: ').bold = True
+            para.add_run(time_period)
+        
+        doc.add_paragraph()
+    
+    # Scoring Analysis
+    if recommendation and recommendation.get('scores'):
+        doc.add_heading('V. SCORING ANALYSIS', 2)
+        
+        scores = recommendation.get('scores', {})
+        total_score = scores.get('total_weighted', 0)
+        
+        # Overall score
+        score_para = doc.add_paragraph()
+        score_para.add_run('Overall Score: ').bold = True
+        score_para.add_run(f"{total_score}/100")
+        
+        # Detailed scoring table
+        doc.add_paragraph('Detailed Scoring Breakdown:')
+        
+        score_table = doc.add_table(rows=1, cols=2)
+        score_table.style = 'Table Grid'
+        
+        # Header row
+        header_row = score_table.rows[0]
+        header_row.cells[0].text = 'Criterion'
+        header_row.cells[1].text = 'Score (out of 5)'
+        
+        # Make header bold
+        for cell in header_row.cells:
+            cell.paragraphs[0].runs[0].bold = True
+        
+        # Add score rows
+        for criterion, score in scores.items():
+            if criterion != 'total_weighted' and score > 0:
+                row = score_table.add_row()
+                row.cells[0].text = criterion.replace('_', ' ').title()
+                row.cells[1].text = f"{score}/5.0"
+        
+        doc.add_paragraph()
+    
+    # Justification
+    if achievement_data.get('justification'):
+        doc.add_heading('VI. JUSTIFICATION', 2)
+        justification_para = doc.add_paragraph(achievement_data.get('justification'))
+        doc.add_paragraph()
+    
+    # Document footer
+    doc.add_paragraph()
+    footer_para = doc.add_paragraph()
+    footer_para.add_run('Created by Coast Guard Award Generator on ').italic = True
+    footer_para.add_run(datetime.now().strftime('%B %d, %Y at %I:%M %p')).italic = True
+    footer_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # Save to bytes
+    doc_io = BytesIO()
+    doc.save(doc_io)
+    doc_io.seek(0)
+    
+    return doc_io.getvalue()
+
+def add_custom_styles(doc):
+    """Add custom styles to the document"""
+    styles = doc.styles
+    
+    # Citation style
+    try:
+        citation_style = styles.add_style('Citation', WD_STYLE_TYPE.PARAGRAPH)
+        citation_style.font.size = Pt(11)
+        citation_style.font.italic = True
+        citation_style.paragraph_format.left_indent = Inches(0.5)
+        citation_style.paragraph_format.right_indent = Inches(0.5)
+        citation_style.paragraph_format.space_before = Pt(6)
+        citation_style.paragraph_format.space_after = Pt(6)
+    except:
+        pass  # Style might already exist
+    
+    # Adjust existing styles
+    try:
+        normal_style = styles['Normal']
+        normal_style.font.name = 'Times New Roman'
+        normal_style.font.size = Pt(12)
+        
+        heading1_style = styles['Heading 1']
+        heading1_style.font.name = 'Times New Roman'
+        heading1_style.font.size = Pt(14)
+        heading1_style.font.bold = True
+        
+        heading2_style = styles['Heading 2']
+        heading2_style.font.name = 'Times New Roman'
+        heading2_style.font.size = Pt(13)
+        heading2_style.font.bold = True
+        
+        heading3_style = styles['Heading 3']
+        heading3_style.font.name = 'Times New Roman'
+        heading3_style.font.size = Pt(12)
+        heading3_style.font.bold = True
+    except:
+        pass  # Styles might not be available
+
+def generate_text_export(export_data):
+    """Generate a human-readable text export (keeping existing function)"""
+    lines = []
+    
+    # Header
+    lines.append("=" * 60)
+    lines.append("COAST GUARD AWARD PACKAGE EXPORT")
+    lines.append("=" * 60)
+    lines.append(f"Generated: {export_data.get('generated_at', 'Unknown')}")
+    lines.append("")
+    
+    # Awardee Information
+    awardee_info = export_data.get('awardee_info', {})
+    if awardee_info:
+        lines.append("AWARDEE INFORMATION:")
+        lines.append("-" * 30)
+        for key, value in awardee_info.items():
+            if value:
+                lines.append(f"{key.replace('_', ' ').title()}: {value}")
+        lines.append("")
+    
+    # Final Award
+    finalized = export_data.get('finalized_award')
+    if finalized:
+        lines.append("FINAL AWARD:")
+        lines.append("-" * 30)
+        lines.append(f"Award: {finalized.get('award', 'N/A')}")
+        lines.append("")
+        lines.append("CITATION:")
+        lines.append(finalized.get('citation', 'No citation available'))
+        lines.append("")
+    
+    # Achievement Data
+    achievement_data = export_data.get('achievement_data', {})
+    if achievement_data:
+        lines.append("ACHIEVEMENT ANALYSIS:")
+        lines.append("-" * 30)
+        
+        # Key sections
+        sections = [
+            ('achievements', 'Key Achievements'),
+            ('impacts', 'Measurable Impacts'),
+            ('leadership_details', 'Leadership Details'),
+            ('innovation_details', 'Innovation & Initiative'),
+            ('challenges', 'Challenges Overcome')
+        ]
+        
+        for field, title in sections:
+            items = achievement_data.get(field, [])
+            if items:
+                lines.append(f"{title}:")
+                for item in items[:5]:  # Limit to top 5
+                    lines.append(f"  • {item}")
+                lines.append("")
+    
+    return "\n".join(lines)
 @app.route('/api/session', methods=['GET'])
 def get_session():
     session_data = {

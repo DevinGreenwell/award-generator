@@ -1,7 +1,7 @@
 /* Main Styles for Coast Guard Award Writing Tool */
 
 :root {
-    --primary-color: #002D62; /* Coast Guard Blue */
+    --primary-color: #003366; /* Coast Guard Blue */
     --secondary-color: #E35205; /* Coast Guard Orange */
     --light-color: #f8f9fa;
     --dark-color: #343a40;
@@ -13,6 +13,196 @@
     --light-gray: #e9ecef;
 }
 
+/* Export Functionality Styles */
+.export-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.export-btn-enhanced {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+    font-size: 1rem;
+}
+
+.export-btn-enhanced:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+}
+
+.export-btn-enhanced:disabled {
+    background: #6c757d;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.export-alternative-formats {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.export-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.export-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.export-modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    z-index: 1001;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.export-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.export-modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+.export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.export-format-btn {
+    padding: 15px;
+    text-align: left;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.export-format-btn:hover {
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.export-format-btn.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-color: #007bff;
+}
+
+.export-format-btn.btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    border-color: #0056b3;
+}
+
+.export-format-btn small {
+    margin-top: 4px;
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+.export-format-btn .icon-word:before { content: "📄 "; }
+.export-format-btn .icon-code:before { content: "💾 "; }
+.export-format-btn .icon-text:before { content: "📝 "; }
+
+.loading-spinner {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Base Styles */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -53,11 +243,13 @@ header {
 .logo {
     display: flex;
     align-items: center;
+    gap: 15px;
 }
 
-.logo img {
-    height: 50px;
-    margin-right: 1rem;
+.logo-image {
+    height: 50px; /* Adjusted from 250px to be reasonable */
+    width: auto;
+    object-fit: contain;
 }
 
 .logo h1 {
@@ -392,32 +584,7 @@ input[type="text"] {
     }
 }
 
-/* Placeholder image for logo */
+/* Remove placeholder logo styles since we're using real logo */
 .placeholder-logo {
-    background-color: var(--light-gray);
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--gray-color);
-    font-weight: bold;
-    border-radius: 5px;
-}
-/* Logo styling */
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.logo-image {
-    height: 250px; /* Adjust size as needed */
-    width: auto;
-    object-fit: contain;
-}
-
-/* Remove or update the placeholder-logo styles since we're not using it anymore */
-.placeholder-logo {
-    display: none; /* Hide the placeholder */
+    display: none;
 }

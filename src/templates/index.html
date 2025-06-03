@@ -3,9 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coast Guard Award Writing Tool</title>
+    <title>Coast Guard Award Generator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Export Functionality Styles -->
+    <style>
+        .export-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .export-modal-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .export-modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .export-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .export-modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-btn:hover {
+            color: #000;
+        }
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .export-format-btn {
+            padding: 15px;
+            text-align: left;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .export-format-btn:hover {
+            border-color: #007bff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+        }
+        .export-format-btn.btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-color: #007bff;
+        }
+        .export-format-btn.btn-primary:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+            border-color: #0056b3;
+        }
+        .export-format-btn small {
+            margin-top: 4px;
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        .export-format-btn .icon-word:before { content: "📄 "; }
+        .export-format-btn .icon-code:before { content: "💾 "; }
+        .export-format-btn .icon-text:before { content: "📝 "; }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        .export-btn-enhanced {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+        .export-btn-enhanced:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+        }
+        .export-btn-enhanced:disabled {
+            background: #6c757d;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -13,7 +169,7 @@
         <header>
             <div class="logo">
                 <img src="{{ url_for('static', filename='img/cg-tools.png') }}" alt="Coast Guard Logo" class="logo-image">
-                <h1>Coast Guard Award Generator Tool</h1>
+                <h1>Coast Guard Award Generator</h1>
             </div>
             <div class="session-controls">
                 <button id="clearSessionBtn" class="btn">Clear Session</button>
@@ -24,11 +180,15 @@
         <section class="awardee-info">
             <div class="awardee-field">
                 <label for="awardeeName">Awardee Name:</label>
-                <input type="text" id="awardeeName" placeholder="Full Name">
+                <input type="text" id="awardeeName" name="name" placeholder="Full Name">
             </div>
             <div class="awardee-field">
                 <label for="awardeeRank">Rank:</label>
-                <input type="text" id="awardeeRank" placeholder="Rank/Grade">
+                <input type="text" id="awardeeRank" name="rank" placeholder="Rank/Grade">
+            </div>
+            <div class="awardee-field">
+                <label for="awardeeUnit">Unit:</label>
+                <input type="text" id="awardeeUnit" name="unit" placeholder="Unit/Command">
             </div>
             <div class="awardee-field">
                 <label for="dateRangeStart">Date Range:</label>
@@ -71,7 +231,7 @@
                         </div>
                     </div>
                     <div class="award-actions">
-                        <button id="exportBtn" class="btn">Export</button>
+                        <button id="exportBtn" class="btn export-btn-enhanced">📄 Export Word Document</button>
                         <button id="printBtn" class="btn">Print</button>
                     </div>
                 </section>
@@ -108,6 +268,293 @@
         </div>
     </template>
 
+    <!-- Export Manager JavaScript -->
+    <script>
+        // Export Manager Class
+        class ExportManager {
+            constructor() {
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                const exportBtn = document.getElementById('exportBtn');
+                
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', () => this.showExportOptions());
+                }
+
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('export-format-btn')) {
+                        const format = e.target.dataset.format;
+                        this.exportData(format);
+                    }
+                });
+            }
+
+            showExportOptions() {
+                const modal = this.createExportModal();
+                document.body.appendChild(modal);
+            }
+
+            createExportModal() {
+                const modal = document.createElement('div');
+                modal.className = 'export-modal';
+                modal.innerHTML = `
+                    <div class="export-modal-content">
+                        <div class="export-modal-header">
+                            <h3>Export Award Package</h3>
+                            <button class="close-btn" onclick="this.closest('.export-modal').remove()">&times;</button>
+                        </div>
+                        <div class="export-modal-body">
+                            <p>Choose export format:</p>
+                            <div class="export-options">
+                                <button class="export-format-btn btn-primary" data-format="docx">
+                                    <i class="icon-word"></i>
+                                    Word Document (.docx) - Professional Format
+                                    <small>Recommended for official submission</small>
+                                </button>
+                                <button class="export-format-btn" data-format="json">
+                                    <i class="icon-code"></i>
+                                    JSON - Complete data package
+                                </button>
+                                <button class="export-format-btn" data-format="txt">
+                                    <i class="icon-text"></i>
+                                    Text - Human readable format
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="export-modal-backdrop" onclick="this.closest('.export-modal').remove()"></div>
+                `;
+                return modal;
+            }
+
+            async exportData(format) {
+                try {
+                    this.showLoadingState(format);
+                    
+                    if (format === 'docx') {
+                        await this.exportDocx();
+                    } else {
+                        await this.exportOtherFormats(format);
+                    }
+
+                } catch (error) {
+                    console.error('Export error:', error);
+                    this.showErrorMessage(`Export failed: ${error.message}`);
+                } finally {
+                    this.hideLoadingState();
+                    const modal = document.querySelector('.export-modal');
+                    if (modal) modal.remove();
+                }
+            }
+
+            async exportDocx() {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        format: 'docx',
+                        awardee_info: this.getAwardeeInfo()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const downloadResponse = await fetch('/api/export/download/docx', {
+                        method: 'GET'
+                    });
+
+                    if (downloadResponse.ok) {
+                        const blob = await downloadResponse.blob();
+                        
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = result.filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        this.showSuccessMessage(`Professional Word document downloaded: ${result.filename}`);
+                    } else {
+                        throw new Error('Failed to download DOCX file');
+                    }
+                } else {
+                    throw new Error(result.error || 'DOCX generation failed');
+                }
+            }
+
+            async exportOtherFormats(format) {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        format: format,
+                        awardee_info: this.getAwardeeInfo()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.downloadFile(result.filename, result.content, result.mimetype);
+                    this.showSuccessMessage(`Export completed! Downloaded ${result.filename}`);
+                } else {
+                    throw new Error(result.error || 'Export failed');
+                }
+            }
+
+            downloadFile(filename, content, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }
+
+            getAwardeeInfo() {
+                const awardeeInfo = {};
+                
+                const fields = ['name', 'rank', 'unit'];
+                fields.forEach(field => {
+                    const element = document.querySelector(`input[name="${field}"]`) || 
+                                  document.getElementById(`awardee${field.charAt(0).toUpperCase() + field.slice(1)}`);
+                    if (element && element.value) {
+                        awardeeInfo[field] = element.value;
+                    }
+                });
+
+                // Add date range
+                const startDate = document.getElementById('dateRangeStart');
+                const endDate = document.getElementById('dateRangeEnd');
+                if (startDate && startDate.value && endDate && endDate.value) {
+                    awardeeInfo.date_range = `${startDate.value} to ${endDate.value}`;
+                }
+
+                return awardeeInfo;
+            }
+
+            showLoadingState(format) {
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.disabled = true;
+                    exportBtn.innerHTML = '<span class="loading-spinner"></span>Generating...';
+                }
+
+                const formatBtn = document.querySelector(`[data-format="${format}"]`);
+                if (formatBtn) {
+                    formatBtn.disabled = true;
+                    formatBtn.innerHTML = '<span class="loading-spinner"></span>Generating...';
+                }
+            }
+
+            hideLoadingState() {
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.disabled = false;
+                    exportBtn.innerHTML = '📄 Export Word Document';
+                }
+            }
+
+            showSuccessMessage(message) {
+                this.showMessage(message, 'success');
+            }
+
+            showErrorMessage(message) {
+                this.showMessage(message, 'error');
+            }
+
+            showMessage(message, type) {
+                let messageArea = document.getElementById('export-messages');
+                if (!messageArea) {
+                    messageArea = document.createElement('div');
+                    messageArea.id = 'export-messages';
+                    messageArea.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 1002;
+                        max-width: 350px;
+                    `;
+                    document.body.appendChild(messageArea);
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `alert alert-${type}`;
+                messageDiv.style.cssText = `
+                    padding: 15px 18px;
+                    margin-bottom: 10px;
+                    border-radius: 6px;
+                    background-color: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                    border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+                    color: ${type === 'success' ? '#155724' : '#721c24'};
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    animation: slideIn 0.3s ease-out;
+                `;
+                
+                const icon = type === 'success' ? '✅' : '❌';
+                messageDiv.innerHTML = `${icon} ${message}`;
+
+                messageArea.appendChild(messageDiv);
+
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.style.animation = 'slideOut 0.3s ease-in';
+                        setTimeout(() => {
+                            if (messageDiv.parentNode) {
+                                messageDiv.parentNode.removeChild(messageDiv);
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }
+
+            async quickExportDocx() {
+                try {
+                    this.showLoadingState('docx');
+                    await this.exportDocx();
+                } catch (error) {
+                    this.showErrorMessage(`DOCX export failed: ${error.message}`);
+                } finally {
+                    this.hideLoadingState();
+                }
+            }
+        }
+
+        // Initialize export manager when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.exportManager = new ExportManager();
+        });
+
+        // Quick export functions
+        async function exportAwardPackageDocx() {
+            if (window.exportManager) {
+                await window.exportManager.quickExportDocx();
+            }
+        }
+
+        async function exportAwardPackage(format = 'docx') {
+            if (window.exportManager) {
+                await window.exportManager.exportData(format);
+            }
+        }
+    </script>
+
+    <!-- Your existing app.js -->
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
