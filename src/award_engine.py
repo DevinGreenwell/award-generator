@@ -100,9 +100,9 @@ class AwardEngine:
 
         # Updated thresholds based on comprehensive scoring (now percentages)
         self.award_thresholds = {
-            "Medal of Honor": 95,
-            "Distinguished Service Medal": 90,
-            "Legion of Merit": 80,
+            "Medal of Honor": 92,
+            "Distinguished Service Medal": 84,
+            "Legion of Merit": 76,
             "Meritorious Service Medal": 70,
             "Coast Guard Commendation Medal": 60,
             "Coast Guard Achievement Medal": 50,
