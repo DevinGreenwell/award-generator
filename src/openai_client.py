@@ -16,7 +16,7 @@ class OpenAIClient:
     def chat_completion(self, messages: list[dict]) -> dict:
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o-mini-2024-07-18",
                 messages=messages,
                 temperature=0.7,
             )
@@ -37,7 +37,7 @@ class OpenAIClient:
 
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o-mini-2024-07-18",
                 messages=[
                     {"role": "system", "content": "You are an assistant that extracts award data."},
                     {"role": "user", "content": prompt},
@@ -64,7 +64,7 @@ class OpenAIClient:
         )
         try:
             resp = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o-mini-2024-07-18",
                 messages=[{"role": "system", "content": "You suggest improvements for award packages."},
                           {"role": "user", "content": prompt}],
                 temperature=0.6,
@@ -84,7 +84,7 @@ class OpenAIClient:
         )
         try:
             resp = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o-2024-11-20",
                 messages=[{"role": "system", "content": "You draft official Coast Guard award citations."},
                           {"role": "user", "content": prompt}],
                 temperature=0.7,
