@@ -4,7 +4,7 @@ import json
 import re
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session
-from award_engine import AwardEngine
+from .award_engine import AwardEngine
 from dotenv import load_dotenv
 load_dotenv()
 
