@@ -42,6 +42,10 @@ try:
         ValidationError, AwardeeInfoValidator, AchievementDataValidator,
         MessageValidator, ExportRequestValidator, SessionDataValidator
     )
+    from session_manager import (
+        store_session_data, get_session_data, clear_session_data,
+        get_or_create_session_id
+    )
 except ImportError:
     # If direct import fails, try with src prefix
     try:
@@ -51,6 +55,10 @@ except ImportError:
         from src.validation import (
             ValidationError, AwardeeInfoValidator, AchievementDataValidator,
             MessageValidator, ExportRequestValidator, SessionDataValidator
+        )
+        from src.session_manager import (
+            store_session_data, get_session_data, clear_session_data,
+            get_or_create_session_id
         )
     except ImportError as e:
         # Log the error and re-raise with helpful message
@@ -93,6 +101,10 @@ try:
     award_engine = AwardEngine()
     openai_client = OpenAIClient()
     logger.info("Services initialized successfully")
+    
+    # Clean up old sessions on startup
+    from session_manager import session_manager
+    session_manager.cleanup_old_sessions()
 except Exception as e:
     logger.error(f"Failed to initialize services: {e}")
     raise
@@ -126,7 +138,12 @@ def index():
 @handle_errors
 def clear_session():
     """Clear the current session data."""
+    # Clear file-based session data
+    clear_session_data(session)
+    
+    # Clear any remaining cookie session data
     session.clear()
+    
     logger.info("Session cleared")
     return jsonify({
         'success': True,
@@ -142,8 +159,8 @@ def api_chat():
     data = MessageValidator.validate(request.get_json())
     message = data['message']
     
-    # Get existing messages from session
-    messages = session.get('messages', [])
+    # Get existing messages from file-based session
+    messages = get_session_data(session, 'messages') or []
     
     # Add the new user message
     messages.append({
@@ -177,9 +194,8 @@ def api_chat():
         "timestamp": datetime.now().isoformat()
     })
     
-    # Store updated messages in session
-    session['messages'] = messages
-    session.permanent = True
+    # Store updated messages in file-based session
+    store_session_data(session, 'messages', messages)
     
     logger.info(f"Chat interaction completed. Total messages: {len(messages)}")
     
@@ -201,8 +217,8 @@ def api_recommend():
     if 'awardee_info' in data:
         awardee_info = AwardeeInfoValidator.validate(data['awardee_info'])
     
-    # Get ALL messages from the session
-    messages = session.get('messages', [])
+    # Get ALL messages from the file-based session
+    messages = get_session_data(session, 'messages') or []
     
     if not messages:
         raise ValidationError("No achievements have been added yet. Please describe some achievements using the chat interface first.")
@@ -221,9 +237,9 @@ def api_recommend():
     # Validate achievement data
     achievement_data = AchievementDataValidator.validate(achievement_data)
     
-    # Store the analysis in session
-    session['achievement_data'] = achievement_data
-    session['awardee_info'] = awardee_info
+    # Store the analysis in file-based session
+    store_session_data(session, 'achievement_data', achievement_data)
+    store_session_data(session, 'awardee_info', awardee_info)
     
     # Score the achievements
     scores = award_engine.score_achievements(achievement_data)
@@ -238,14 +254,15 @@ def api_recommend():
     # Generate improvement suggestions
     suggestions = award_engine.generate_improvement_suggestions(award, achievement_data)
     
-    # Store recommendation in session
-    session['recommendation'] = {
+    # Store recommendation in file-based session
+    recommendation_data = {
         'award': award,
         'explanation': explanation,
         'achievement_data': achievement_data,
         'scores': scores,
         'suggestions': suggestions
     }
+    store_session_data(session, 'recommendation', recommendation_data)
     
     logger.info(f"Generated recommendation: {award} with score {recommendation['score']}")
     
@@ -267,12 +284,12 @@ def api_refresh():
     data = request.get_json()
     
     # Validate awardee info if provided
-    awardee_info = session.get('awardee_info', {})
+    awardee_info = get_session_data(session, 'awardee_info') or {}
     if 'awardee_info' in data:
         awardee_info = AwardeeInfoValidator.validate(data['awardee_info'])
     
-    # Get messages from session
-    messages = session.get('messages', [])
+    # Get messages from file-based session
+    messages = get_session_data(session, 'messages') or []
     
     if not messages:
         raise ValidationError("No conversation found. Please start a new conversation.")
@@ -285,8 +302,8 @@ def api_refresh():
     # Validate achievement data
     achievement_data = AchievementDataValidator.validate(achievement_data)
     
-    # Update session
-    session['achievement_data'] = achievement_data
+    # Update file-based session
+    store_session_data(session, 'achievement_data', achievement_data)
     
     # Score and recommend
     scores = award_engine.score_achievements(achievement_data)
@@ -297,14 +314,15 @@ def api_refresh():
     explanation = award_engine.generate_explanation(award, achievement_data, scores)
     suggestions = award_engine.generate_improvement_suggestions(award, achievement_data)
     
-    # Update recommendation in session
-    session['recommendation'] = {
+    # Update recommendation in file-based session
+    recommendation_data = {
         'award': award,
         'explanation': explanation,
         'achievement_data': achievement_data,
         'scores': scores,
         'suggestions': suggestions
     }
+    store_session_data(session, 'recommendation', recommendation_data)
     
     logger.info(f"Refreshed recommendation: {award}")
     
@@ -333,9 +351,9 @@ def api_improve():
     if not current_award:
         raise ValidationError('No current award found. Please generate a recommendation first.')
     
-    # Get current session data
-    achievement_data = session.get('achievement_data', {})
-    awardee_info = session.get('awardee_info', {})
+    # Get current session data from file-based session
+    achievement_data = get_session_data(session, 'achievement_data') or {}
+    awardee_info = get_session_data(session, 'awardee_info') or {}
     
     if not achievement_data:
         raise ValidationError('No achievement data found. Please generate a recommendation first.')
@@ -350,12 +368,13 @@ def api_improve():
     # Get current scores for reference
     current_scores = award_engine.score_achievements(achievement_data)
     
-    # Store improvement suggestions in session
-    session['improvement_suggestions'] = {
+    # Store improvement suggestions in file-based session
+    improvement_data = {
         'current_award': current_award,
         'suggestions': suggestions,
         'current_scores': current_scores
     }
+    store_session_data(session, 'improvement_suggestions', improvement_data)
     
     return jsonify({
         'success': True,
@@ -380,9 +399,9 @@ def api_finalize():
     if not award:
         raise ValidationError('No award specified. Please generate a recommendation first.')
     
-    # Get current achievement data from session
-    achievement_data = session.get('achievement_data', {})
-    awardee_info = session.get('awardee_info', {})
+    # Get current achievement data from file-based session
+    achievement_data = get_session_data(session, 'achievement_data') or {}
+    awardee_info = get_session_data(session, 'awardee_info') or {}
     
     if not achievement_data:
         raise ValidationError('No achievement data found. Please generate a recommendation first.')
@@ -392,12 +411,13 @@ def api_finalize():
     # Generate final citation
     citation = openai_client.draft_award(award, achievement_data, awardee_info)
     
-    # Store finalized award in session
-    session['finalized_award'] = {
+    # Store finalized award in file-based session
+    finalized_data = {
         'award': award,
         'citation': citation,
         'finalized_at': datetime.now().isoformat()
     }
+    store_session_data(session, 'finalized_award', finalized_data)
     
     return jsonify({
         'success': True,
@@ -416,14 +436,14 @@ def api_export():
     
     # Update awardee info if provided
     if data['awardee_info']:
-        session['awardee_info'] = data['awardee_info']
+        store_session_data(session, 'awardee_info', data['awardee_info'])
     
-    # Gather all session data
-    finalized = session.get('finalized_award')
-    recommendation = session.get('recommendation')
-    achievement_data = session.get('achievement_data', {})
-    awardee_info = session.get('awardee_info', {})
-    messages = session.get('messages', [])
+    # Gather all session data from file-based session
+    finalized = get_session_data(session, 'finalized_award')
+    recommendation = get_session_data(session, 'recommendation')
+    achievement_data = get_session_data(session, 'achievement_data') or {}
+    awardee_info = get_session_data(session, 'awardee_info') or {}
+    messages = get_session_data(session, 'messages') or []
     
     # Prepare export data
     export_data = {
@@ -443,8 +463,8 @@ def api_export():
     
     if export_format == 'docx':
         filename = f"award_package_{name}_{timestamp}.docx"
-        # Store export data in session for download endpoint
-        session['export_data'] = export_data
+        # Store export data in file-based session for download endpoint
+        store_session_data(session, 'export_data', export_data)
         
         return jsonify({
             'success': True,
@@ -480,8 +500,8 @@ def api_export():
 @handle_errors
 def download_docx():
     """Download the generated DOCX file."""
-    # Get export data from session
-    export_data = session.get('export_data')
+    # Get export data from file-based session
+    export_data = get_session_data(session, 'export_data')
     if not export_data:
         raise ValidationError("No export data found. Please generate an export first.")
     
@@ -510,12 +530,12 @@ def download_docx():
 def get_session():
     """Get current session data."""
     session_data = {
-        "session_id": session.get('session_id', 'default'),
-        "session_name": session.get('session_name', ''),
-        "messages": session.get('messages', []),
-        "awardee_info": session.get('awardee_info', {}),
-        "recommendation": session.get('recommendation'),
-        "finalized_award": session.get('finalized_award')
+        "session_id": get_session_data(session, 'session_id') or 'default',
+        "session_name": get_session_data(session, 'session_name') or '',
+        "messages": get_session_data(session, 'messages') or [],
+        "awardee_info": get_session_data(session, 'awardee_info') or {},
+        "recommendation": get_session_data(session, 'recommendation'),
+        "finalized_award": get_session_data(session, 'finalized_award')
     }
     return jsonify(session_data)
 
@@ -527,10 +547,10 @@ def save_session():
     # Validate input
     data = SessionDataValidator.validate(request.get_json())
     
-    # Save relevant fields to session
+    # Save relevant fields to file-based session
     for key in ['session_id', 'session_name', 'messages', 'awardee_info']:
         if key in data:
-            session[key] = data[key]
+            store_session_data(session, key, data[key])
     
     session.permanent = True
     
@@ -549,19 +569,23 @@ def debug_session():
     if not app.debug:
         return jsonify({"error": "Debug endpoint not available in production"}), 403
     
+    # Get session data
+    session_data = get_session_data(session) or {}
+    messages = get_session_data(session, 'messages') or []
+    
     return jsonify({
-        "session_keys": list(session.keys()),
-        "messages_count": len(session.get('messages', [])),
-        "has_achievement_data": 'achievement_data' in session,
-        "has_recommendation": 'recommendation' in session,
-        "session_id": session.get('session_id', 'No ID'),
+        "session_keys": list(session_data.keys()),
+        "messages_count": len(messages),
+        "has_achievement_data": 'achievement_data' in session_data,
+        "has_recommendation": 'recommendation' in session_data,
+        "session_id": get_session_data(session, 'session_id') or 'No ID',
         "recent_messages": [
             {
                 "role": msg.get('role'),
                 "content": msg.get('content', '')[:100] + "..." if len(msg.get('content', '')) > 100 else msg.get('content', ''),
                 "timestamp": msg.get('timestamp')
             }
-            for msg in session.get('messages', [])[-5:]  # Last 5 messages
+            for msg in messages[-5:]  # Last 5 messages
         ]
     })
 
