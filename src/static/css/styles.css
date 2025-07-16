@@ -77,19 +77,22 @@ header {
 
 /* Awardee Info Styles */
 .awardee-info {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     background-color: var(--light-color);
     border-bottom: 1px solid var(--border-color);
     position: relative;
     z-index: 99;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .awardee-info-row {
     display: flex;
     flex-wrap: nowrap;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: center;
     overflow-x: auto;
+    padding: 0.5rem 0;
+    max-width: 100%;
 }
 
 .awardee-field {
@@ -97,30 +100,67 @@ header {
     align-items: center;
     gap: 0.5rem;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .awardee-field label {
     font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--dark-color);
+}
+
+.awardee-field.date-range-field {
+    gap: 0.3rem;
+}
+
+.date-separator {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    padding: 0 0.2rem;
 }
 
 .awardee-field.checkbox-field {
-    margin-left: 1rem;
+    margin-left: auto;
+}
+
+.awardee-field.checkbox-field label {
+    order: 2;
+    margin-left: 0.25rem;
 }
 
 .awardee-field input[type="checkbox"] {
     margin: 0;
     cursor: pointer;
+    order: 1;
 }
 
-.awardee-field input {
-    padding: 0.5rem;
+.awardee-field input[type="text"],
+.awardee-field input[type="date"] {
+    padding: 0.4rem 0.6rem;
     border: 1px solid var(--border-color);
-    border-radius: 5px;
-    min-width: 200px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.awardee-field input[type="text"] {
+    width: 150px;
 }
 
 .awardee-field input[type="date"] {
-    min-width: 150px;
+    width: 130px;
+}
+
+/* Specific field widths for better layout */
+#awardeeName {
+    width: 200px;
+}
+
+#awardeeRank {
+    width: 100px;
+}
+
+#awardeeUnit {
+    width: 180px;
 }
 
 /* Main Content Styles */
@@ -390,15 +430,24 @@ input[type="text"] {
     .awardee-info-row {
         overflow-x: scroll;
         -webkit-overflow-scrolling: touch;
+        gap: 1rem;
     }
     
-    .awardee-field label {
-        min-width: auto;
-        font-size: 0.9rem;
+    .awardee-field input[type="text"],
+    .awardee-field input[type="date"] {
+        width: 120px;
     }
     
-    .awardee-field input {
-        max-width: 120px;
+    #awardeeName {
+        width: 150px;
+    }
+    
+    #awardeeRank {
+        width: 80px;
+    }
+    
+    #awardeeUnit {
+        width: 140px;
     }
     
     .chat-container, .award-container {
