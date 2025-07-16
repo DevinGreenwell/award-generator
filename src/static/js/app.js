@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const awardeeUnit = document.getElementById('awardeeUnit');
     const dateRangeStart = document.getElementById('dateRangeStart');
     const dateRangeEnd = document.getElementById('dateRangeEnd');
+    const operationalDevice = document.getElementById('operationalDevice');
     
     // Message template
     const messageTpl = document.getElementById('messageTpl');
@@ -248,8 +249,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const awardeeInfo = {
             name: awardeeName.value,
             rank: awardeeRank.value,
+            unit: awardeeUnit.value,
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice.checked
         };
         
         // Show loading state
@@ -294,8 +297,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const awardeeInfo = {
             name: awardeeName.value,
             rank: awardeeRank.value,
+            unit: awardeeUnit.value,
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice.checked
         };
         
         // Show loading state
@@ -340,8 +345,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const awardeeInfo = {
             name: awardeeName.value,
             rank: awardeeRank.value,
+            unit: awardeeUnit.value,
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice.checked
         };
         
         // Show loading state
@@ -386,8 +393,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const awardeeInfo = {
             name: awardeeName.value,
             rank: awardeeRank.value,
+            unit: awardeeUnit.value,
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice.checked
         };
         
         // Show loading state
@@ -474,8 +483,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const awardeeInfo = {
             name: awardeeName.value,
             rank: awardeeRank.value,
+            unit: awardeeUnit.value,
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice.checked
         };
         
         fetch('/api/export', {
@@ -559,6 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (awardeeUnit) awardeeUnit.value = '';
                     dateRangeStart.value = '';
                     dateRangeEnd.value = '';
+                    if (operationalDevice) operationalDevice.checked = false;
                     
                     // Reinitialize chat
                     initChat();
@@ -598,8 +610,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const awardeeInfo = {
             name: awardeeName.value,
             rank: awardeeRank.value,
+            unit: awardeeUnit.value,
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice.checked
         };
         
         fetch('/api/session', {

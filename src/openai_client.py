@@ -404,6 +404,9 @@ Return ONLY the JSON array, no other text.
 
     def draft_award(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
         """Generate a formal award citation."""
+        # Check if operational device is authorized
+        has_operational_device = awardee_info.get('operational_device', False)
+        
         prompt = f"""
 Draft a formal Coast Guard {award} citation using the following information:
 
@@ -419,6 +422,8 @@ Create a professional, formal citation that follows Coast Guard standards. Inclu
 - Leadership demonstrated
 - Scope and significance of contributions
 - Formal closing appropriate for this award level
+
+{"IMPORTANT: At the very end of the citation, add the following sentence on a new line: 'The Operational Distinguishing Device is authorized.'" if has_operational_device else ""}
 
 Return only the formatted citation text.
 """

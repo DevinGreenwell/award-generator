@@ -77,9 +77,6 @@ header {
 
 /* Awardee Info Styles */
 .awardee-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
     padding: 1rem;
     background-color: var(--light-color);
     border-bottom: 1px solid var(--border-color);
@@ -87,15 +84,32 @@ header {
     z-index: 99;
 }
 
+.awardee-info-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    align-items: center;
+    overflow-x: auto;
+}
+
 .awardee-field {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
 }
 
 .awardee-field label {
     font-weight: 500;
-    min-width: 100px;
+}
+
+.awardee-field.checkbox-field {
+    margin-left: 1rem;
+}
+
+.awardee-field input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
 }
 
 .awardee-field input {
@@ -373,8 +387,18 @@ input[type="text"] {
         justify-content: space-between;
     }
     
-    .awardee-info {
-        flex-direction: column;
+    .awardee-info-row {
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .awardee-field label {
+        min-width: auto;
+        font-size: 0.9rem;
+    }
+    
+    .awardee-field input {
+        max-width: 120px;
     }
     
     .chat-container, .award-container {

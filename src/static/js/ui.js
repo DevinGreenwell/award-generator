@@ -130,14 +130,15 @@ const UI = {
      * Get awardee info from form
      */
     getAwardeeInfo: function(fields) {
-        const { awardeeName, awardeeRank, awardeeUnit, dateRangeStart, dateRangeEnd } = fields;
+        const { awardeeName, awardeeRank, awardeeUnit, dateRangeStart, dateRangeEnd, operationalDevice } = fields;
         
         return {
             name: awardeeName.value,
             rank: awardeeRank.value,
             unit: awardeeUnit ? awardeeUnit.value : '',
             date_start: dateRangeStart.value,
-            date_end: dateRangeEnd.value
+            date_end: dateRangeEnd.value,
+            operational_device: operationalDevice ? operationalDevice.checked : false
         };
     },
 
@@ -146,8 +147,12 @@ const UI = {
      */
     clearFormFields: function(fields) {
         Object.values(fields).forEach(field => {
-            if (field && field.value !== undefined) {
-                field.value = '';
+            if (field) {
+                if (field.type === 'checkbox') {
+                    field.checked = false;
+                } else if (field.value !== undefined) {
+                    field.value = '';
+                }
             }
         });
     },
