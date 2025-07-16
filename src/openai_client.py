@@ -3,10 +3,18 @@ OpenAI Client with enhanced error handling and retry logic.
 """
 
 import os
+import sys
 import json
 import time
 import logging
 from typing import Dict, List, Optional
+from pathlib import Path
+
+# Add the src directory to Python path for imports to work in both local and deployed environments
+current_dir = Path(__file__).parent
+if current_dir.name == 'src' and str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
+
 import openai
 
 # Handle different OpenAI library versions

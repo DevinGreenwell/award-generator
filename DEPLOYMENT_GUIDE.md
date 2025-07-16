@@ -93,3 +93,33 @@ The application is now fully functional with:
 - ✅ Retry logic for API calls
 - ✅ Professional document export
 - ✅ Clean, maintainable codebase
+
+## Cloud Deployment (Railway, Heroku, etc.)
+
+The application has been configured to work with cloud deployment platforms. The import paths have been fixed to work in both local and deployed environments.
+
+### Railway Deployment
+
+1. The app includes a `railway.json` configuration file
+2. The `Procfile` has been updated to use the proper startup command
+3. A `wsgi.py` file handles proper path configuration
+
+### Key Files for Deployment
+
+- `src/wsgi.py` - WSGI entry point with path configuration
+- `Procfile` - Defines the web process command
+- `railway.json` - Railway-specific configuration
+- `start.py` - Alternative startup script if needed
+
+### Environment Variables Required
+
+Make sure to set these in your deployment platform:
+- `OPENAI_API_KEY` - Your OpenAI API key
+- `SECRET_KEY` - A secure secret key for Flask sessions
+- `PORT` - Usually set automatically by the platform
+
+The import path fixes ensure the app works correctly whether it's:
+- Run locally from the project root
+- Run from within the src directory  
+- Deployed to `/app/src/` in a container
+- Started via gunicorn with different working directories

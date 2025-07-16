@@ -3,11 +3,27 @@ Main Flask application for the Coast Guard Award Generator.
 """
 
 import os
+import sys
 import json
 import logging
 from datetime import datetime
 from io import BytesIO
 from functools import wraps
+from pathlib import Path
+
+# Add the src directory to Python path for imports to work in both local and deployed environments
+# This handles cases where the app is run from different directories
+current_dir = Path(__file__).parent
+if current_dir.name == 'src':
+    # We're in the src directory, add parent to path
+    sys.path.insert(0, str(current_dir.parent))
+    # Also add src itself to path
+    sys.path.insert(0, str(current_dir))
+else:
+    # We might be running from project root or elsewhere
+    src_dir = current_dir / 'src'
+    if src_dir.exists():
+        sys.path.insert(0, str(src_dir))
 
 from flask import Flask, render_template, request, jsonify, session, send_file, make_response
 from flask_cors import CORS
@@ -16,13 +32,39 @@ from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 
-from award_engine import AwardEngine, AwardEngineError, InsufficientDataError
-from openai_client import OpenAIClient
-from config import current_config, setup_logging
-from validation import (
-    ValidationError, AwardeeInfoValidator, AchievementDataValidator,
-    MessageValidator, ExportRequestValidator, SessionDataValidator
-)
+# Try different import strategies for compatibility
+try:
+    # Try direct import first (works in most cases)
+    from award_engine import AwardEngine, AwardEngineError, InsufficientDataError
+    from openai_client import OpenAIClient
+    from config import current_config, setup_logging
+    from validation import (
+        ValidationError, AwardeeInfoValidator, AchievementDataValidator,
+        MessageValidator, ExportRequestValidator, SessionDataValidator
+    )
+except ImportError:
+    # If direct import fails, try with src prefix
+    try:
+        from src.award_engine import AwardEngine, AwardEngineError, InsufficientDataError
+        from src.openai_client import OpenAIClient
+        from src.config import current_config, setup_logging
+        from src.validation import (
+            ValidationError, AwardeeInfoValidator, AchievementDataValidator,
+            MessageValidator, ExportRequestValidator, SessionDataValidator
+        )
+    except ImportError as e:
+        # Log the error and re-raise with helpful message
+        import traceback
+        print(f"Import error: {e}")
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Python path: {sys.path}")
+        print(f"Directory contents: {os.listdir('.')}")
+        traceback.print_exc()
+        raise ImportError(
+            f"Failed to import required modules. "
+            f"Current directory: {os.getcwd()}, "
+            f"__file__ location: {__file__}"
+        )
 
 # Set up logging
 logger = setup_logging()

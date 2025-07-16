@@ -1,1 +1,1 @@
-web: gunicorn src.app:app
+web: gunicorn --chdir src wsgi:application --bind 0.0.0.0:$PORT
