@@ -1,7 +1,19 @@
+# Core Flask dependencies
 flask==2.3.3
+flask-cors==4.0.0
 gunicorn==21.2.0
-openai==0.28.1
-python-dotenv==1.0.0
 Werkzeug==2.3.7
+
+# OpenAI integration
+openai==0.28.1
+
+# Document generation
 python-docx==0.8.11
-lxml==4.9.3
+# lxml==5.2.2  # Optional, will be installed with python-docx
+
+# Environment and configuration
+python-dotenv==1.0.0
+
+# Optional: Enhanced sentence tokenization
+# Uncomment if you want better text processing
+# nltk==3.8.1

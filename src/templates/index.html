@@ -554,7 +554,11 @@
         }
     </script>
 
-    <!-- Your existing app.js -->
+    <!-- JavaScript modules -->
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    
+    <!-- Main application script -->
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

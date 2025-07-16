@@ -1,94 +1,435 @@
+"""
+OpenAI Client with enhanced error handling and retry logic.
+"""
 
 import os
 import json
+import time
+import logging
+from typing import Dict, List, Optional
 import openai
+
+# Handle different OpenAI library versions
+try:
+    from openai import error as openai_error
+except ImportError:
+    # Newer versions of openai library have different error structure
+    import openai as openai_error
+
+logger = logging.getLogger(__name__)
+
 
 class OpenAIClient:
     """
     Handles all calls to the OpenAI API for chat, analysis, suggestions, and drafting.
+    Includes retry logic and comprehensive error handling.
     """
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
+        if not self.api_key:
+            raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
         openai.api_key = self.api_key
+        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini-2024-07-18")
+        self.max_retries = 3
+        self.retry_delay = 1  # seconds
 
-    # ---------- Simple chat completion ----------
-    def chat_completion(self, messages: list[dict]) -> dict:
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini-2024-07-18",
-                messages=messages,
-                temperature=0.7,
-            )
-            return response.choices[0].message
-        except Exception as e:
-            # Return a fallback dict so front‑end never crashes
-            return {"role": "assistant", "content": f"[OpenAI error] {e}"}
+    def _handle_api_error(self, error: Exception, context: str) -> Dict:
+        """Handle various OpenAI API errors with appropriate responses."""
+        error_message = str(error)
+        
+        if isinstance(error, openai_error.RateLimitError):
+            logger.warning(f"Rate limit hit during {context}: {error_message}")
+            return {"error": "Rate limit reached. Please try again in a moment."}
+        
+        elif isinstance(error, openai_error.AuthenticationError):
+            logger.error(f"Authentication error during {context}: {error_message}")
+            return {"error": "Authentication failed. Please check API key configuration."}
+        
+        elif isinstance(error, openai_error.InvalidRequestError):
+            logger.error(f"Invalid request during {context}: {error_message}")
+            return {"error": "Invalid request. Please check input data."}
+        
+        elif isinstance(error, openai_error.ServiceUnavailableError):
+            logger.error(f"Service unavailable during {context}: {error_message}")
+            return {"error": "OpenAI service is temporarily unavailable. Please try again later."}
+        
+        else:
+            logger.error(f"Unexpected error during {context}: {error_message}", exc_info=True)
+            return {"error": f"An unexpected error occurred: {error_message}"}
 
-    # ---------- Analyze achievements ----------
-    def analyze_achievements(self, messages: list[dict], awardee_info: dict, refresh=False) -> dict:
-        prompt = (
-            "Analyze the following conversation and extract Coast Guard‑style achievements and impacts. "
-            "Return JSON with keys achievements (list) and impacts (list). "
-            "Respond ONLY with JSON."
-        )
+    def _make_api_call(self, messages: List[Dict], temperature: float = 0.7, 
+                      max_tokens: Optional[int] = None, context: str = "API call") -> Dict:
+        """Make an API call with retry logic."""
+        for attempt in range(self.max_retries):
+            try:
+                kwargs = {
+                    "model": self.model,
+                    "messages": messages,
+                    "temperature": temperature
+                }
+                if max_tokens:
+                    kwargs["max_tokens"] = max_tokens
+                
+                response = openai.ChatCompletion.create(**kwargs)
+                return response.choices[0].message
+                
+            except openai_error.RateLimitError as e:
+                if attempt < self.max_retries - 1:
+                    delay = self.retry_delay * (2 ** attempt)  # Exponential backoff
+                    logger.info(f"Rate limit hit, retrying in {delay} seconds...")
+                    time.sleep(delay)
+                    continue
+                return self._handle_api_error(e, context)
+                
+            except Exception as e:
+                if attempt < self.max_retries - 1 and "timeout" in str(e).lower():
+                    logger.info(f"Timeout on attempt {attempt + 1}, retrying...")
+                    time.sleep(self.retry_delay)
+                    continue
+                return self._handle_api_error(e, context)
+        
+        return {"error": f"Failed after {self.max_retries} attempts"}
+
+    def chat_completion(self, messages: List[Dict]) -> Dict:
+        """Simple chat completion with error handling."""
+        result = self._make_api_call(messages, temperature=0.7, context="chat")
+        
+        # Ensure we always return a properly formatted response
+        if "error" in result:
+            return {"role": "assistant", "content": result["error"]}
+        
+        return {
+            "role": result.get("role", "assistant"),
+            "content": result.get("content", "I understand. Please continue.")
+        }
+
+    def analyze_achievements(self, messages: List[Dict], awardee_info: Dict, 
+                           refresh: bool = False) -> Dict:
+        """
+        Enhanced analysis with better conversation processing and comprehensive extraction.
+        """
+        # Separate user content from assistant responses
+        user_content = []
+        conversation_flow = []
+        user_inputs = []
+        
+        for i, msg in enumerate(messages):
+            role = msg.get('role', 'unknown')
+            content = msg.get('content', '').strip()
+            
+            if role == 'user' and content:
+                user_content.append(content)
+                user_inputs.append(content)
+                conversation_flow.append(f"USER {i}: {content}")
+            elif role == 'assistant' and content:
+                conversation_flow.append(f"ASSISTANT {i}: {content}")
+        
+        # Build comprehensive conversation text
+        conversation_text = '\n'.join(conversation_flow)
+        
+        # Enhanced prompt with comprehensive extraction
+        base_prompt = f"""
+You are an expert Coast Guard personnel analyst. Analyze this complete conversation 
+to extract ALL achievements, impacts, and award-relevant details.
+
+AWARDEE INFORMATION:
+{json.dumps(awardee_info, indent=2)}
+
+FULL CONVERSATION:
+{conversation_text}
+
+Extract comprehensive data and return ONLY valid JSON with this EXACT structure:
+{{
+    "achievements": [
+        "List ALL significant accomplishments, projects, initiatives, and responsibilities mentioned"
+    ],
+    "impacts": [
+        "List ALL quantifiable results, outcomes, improvements, and benefits mentioned"
+    ],
+    "leadership_details": [
+        "List ALL leadership roles, supervision, training provided, and management responsibilities"
+    ],
+    "innovation_details": [
+        "List ALL creative solutions, new processes, improvements, and first-time initiatives"
+    ],
+    "challenges": [
+        "List ALL obstacles, difficulties, constraints, and complex situations overcome"
+    ],
+    "scope": "Detailed description of organizational reach (individual/unit/sector/district/area/coast guard-wide/national/international)",
+    "time_period": "Duration or timeframe of accomplishments (be specific: days/weeks/months/years)",
+    "valor_indicators": [
+        "List ANY life-saving actions, rescue operations, dangerous situations, or heroic acts"
+    ],
+    "quantifiable_metrics": [
+        "List ALL specific numbers, percentages, dollar amounts, time savings, or measurable results"
+    ],
+    "awards_received": [
+        "List ANY awards, commendations, recognitions, or formal acknowledgments mentioned"
+    ],
+    "collaboration": [
+        "List inter-agency work, joint operations, multi-unit coordination, or external partnerships"
+    ],
+    "training_provided": [
+        "List training delivered to others, knowledge transfer, mentoring, or skill development activities"
+    ],
+    "above_beyond_indicators": [
+        "List ANY voluntary overtime, extra duties, personal sacrifice, or exceptional effort beyond normal duties"
+    ],
+    "emergency_response": [
+        "List ANY emergency situations, crisis response, urgent missions, or time-critical operations"
+    ],
+    "justification": "Comprehensive summary explaining why these accomplishments are significant and noteworthy for Coast Guard awards"
+}}
+
+CRITICAL EXTRACTION INSTRUCTIONS:
+- Extract EVERY achievement mentioned, regardless of size or perceived importance
+- Include ALL quantifiable data: exact numbers, percentages, dollar amounts, timeframes, personnel counts
+- Capture leadership at ANY level: formal supervision, informal leadership, project management, team coordination
+- Note ANY innovation, process improvement, creative solution, or new approach
+- Include ALL challenges: resource constraints, time pressure, difficult conditions, complex problems
+- Look for scope indicators: individual/team/unit/sector/district/area/coast guard-wide/national/international
+- Identify valor: life-saving, rescue operations, dangerous conditions, personal risk
+- Extract collaboration: inter-agency, joint operations, partnerships, coordination efforts
+- Find training activities: instruction given, mentoring provided, knowledge transfer
+- Identify above-and-beyond: voluntary work, extra hours, personal sacrifice, exceptional effort
+- Note emergency response: crisis situations, urgent missions, disaster response
+- Pay attention to IMPLIED accomplishments from context and follow-up details
+- Be specific and detailed - avoid generic statements
+
+Return ONLY the JSON object with no additional text, formatting, or explanations.
+"""
+        
         if refresh:
-            prompt += " Provide alternative phrasing."
+            base_prompt += "\n\nIMPORTANT: This is a REFRESH analysis. Provide alternative phrasing and extract any additional details that may have been missed in previous analysis. Look for subtle details, implied accomplishments, and context clues."
 
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini-2024-07-18",
+            logger.info(f"Analyzing conversation with {len(conversation_flow)} exchanges")
+            
+            response = self._make_api_call(
                 messages=[
-                    {"role": "system", "content": "You are an assistant that extracts award data."},
-                    {"role": "user", "content": prompt},
-                    {"role": "user", "content": json.dumps(messages)},
+                    {
+                        "role": "system", 
+                        "content": "You are an expert Coast Guard personnel analyst who extracts comprehensive achievement data from conversations. You must return valid JSON only with all specified fields populated."
+                    },
+                    {"role": "user", "content": base_prompt}
+                ],
+                temperature=0.1,  # Very low temperature for consistent extraction
+                max_tokens=3000,  # Increased token limit for comprehensive response
+                context="achievement analysis"
+            )
+            
+            if "error" in response:
+                raise Exception(response["error"])
+            
+            content = response.get("content", "").strip()
+            
+            # Clean up any markdown formatting
+            content = content.replace('```json', '').replace('```', '').strip()
+            
+            # Parse the JSON response
+            data = json.loads(content)
+            
+            # Validate and ensure all required fields exist with proper defaults
+            required_fields = {
+                'achievements': [],
+                'impacts': [],
+                'leadership_details': [],
+                'innovation_details': [],
+                'challenges': [],
+                'scope': 'Not specified',
+                'time_period': 'Not specified',
+                'valor_indicators': [],
+                'quantifiable_metrics': [],
+                'awards_received': [],
+                'collaboration': [],
+                'training_provided': [],
+                'above_beyond_indicators': [],
+                'emergency_response': [],
+                'justification': 'Based on the provided accomplishments and their significance to Coast Guard operations'
+            }
+            
+            # Ensure all fields exist and have proper values
+            for field, default_value in required_fields.items():
+                if field not in data:
+                    data[field] = default_value
+                elif not data[field] and isinstance(default_value, list):
+                    data[field] = []
+                elif not data[field] and isinstance(default_value, str):
+                    data[field] = default_value
+            
+            # Enhanced fallback if no achievements extracted
+            if not data.get('achievements') or len(data['achievements']) == 0:
+                if user_inputs:
+                    data['achievements'] = user_inputs[:5]  # Limit to first 5 user inputs
+                else:
+                    data['achievements'] = ["No specific achievements identified from conversation"]
+            
+            # Log extraction results
+            logger.info(f"EXTRACTION RESULTS:")
+            logger.info(f"  Achievements: {len(data.get('achievements', []))}")
+            logger.info(f"  Impacts: {len(data.get('impacts', []))}")
+            logger.info(f"  Leadership: {len(data.get('leadership_details', []))}")
+            logger.info(f"  Innovation: {len(data.get('innovation_details', []))}")
+            
+            return data
+            
+        except (json.JSONDecodeError, Exception) as e:
+            logger.error(f"ERROR in analyze_achievements: {e}")
+            if 'content' in locals():
+                logger.debug(f"Raw OpenAI response: {content[:500]}...")
+            
+            # Comprehensive fallback structure
+            fallback_data = {
+                "achievements": user_inputs if user_inputs else ["No achievements specified"],
+                "impacts": [],
+                "leadership_details": [],
+                "innovation_details": [],
+                "challenges": [],
+                "scope": "Individual level",
+                "time_period": "Not specified",
+                "valor_indicators": [],
+                "quantifiable_metrics": [],
+                "awards_received": [],
+                "collaboration": [],
+                "training_provided": [],
+                "above_beyond_indicators": [],
+                "emergency_response": [],
+                "justification": "Analysis failed - using basic extraction from user inputs. Please try generating the recommendation again."
+            }
+            
+            return fallback_data
+
+    def generate_improvement_suggestions(self, award: str, achievement_data: Dict, 
+                                       awardee_info: Dict) -> List[str]:
+        """Generate specific improvement suggestions based on current data."""
+        prompt = f"""
+You are a Coast Guard award writing expert. Based on the current achievement data and recommended award level, provide specific, actionable suggestions for improvement.
+
+CURRENT AWARD RECOMMENDATION: {award}
+
+CURRENT ACHIEVEMENT DATA:
+{json.dumps(achievement_data, indent=2)}
+
+AWARDEE INFO:
+{json.dumps(awardee_info, indent=2)}
+
+Analyze the gaps and weaknesses in this achievement package and provide 5-7 specific, actionable suggestions for improvement. Focus on:
+
+1. Missing quantifiable impacts (numbers, percentages, dollar amounts)
+2. Insufficient leadership details (how many people, what responsibilities)
+3. Lack of scope clarity (unit/district/coast guard-wide impact)
+4. Missing innovation or creative problem-solving examples
+5. Insufficient challenge/obstacle details
+6. Weak time period or duration information
+7. Missing awards, recognitions, or special acknowledgments
+
+Return a JSON array of suggestion strings. Each suggestion should be specific and actionable.
+Example: ["Add specific numbers: How many personnel did you supervise?", "Quantify the cost savings or efficiency gains achieved"]
+
+Return ONLY the JSON array, no other text.
+"""
+        
+        try:
+            response = self._make_api_call(
+                messages=[
+                    {"role": "system", "content": "You provide specific, actionable improvement suggestions for Coast Guard award packages."},
+                    {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,
+                context="improvement suggestions"
             )
-            data = json.loads(response.choices[0].message.content)
-        except Exception:
-            data = {"achievements": [], "impacts": []}
-
-        # ---- Fallback: if empty, copy user lines ----
-        if not data.get("achievements"):
-            user_lines = [m["content"] for m in messages if m.get("role") == "user"]
-            data["achievements"] = user_lines
-
-        return data
-
-    # ---------- Suggest improvement ----------
-    def generate_improvement_suggestions(self, award: str, achievement_data: dict, awardee_info: dict) -> list[str]:
-        prompt = (
-            f"Given award '{award}', achievements {json.dumps(achievement_data)}, and awardee info "
-            f"{json.dumps(awardee_info)}, list 3‑5 concrete ways to improve the recommendation."
-        )
-        try:
-            resp = openai.ChatCompletion.create(
-                model="gpt-4o-mini-2024-07-18",
-                messages=[{"role": "system", "content": "You suggest improvements for award packages."},
-                          {"role": "user", "content": prompt}],
-                temperature=0.6,
-            )
-            suggestions = json.loads(resp.choices[0].message.content)
+            
+            if "error" in response:
+                raise Exception(response["error"])
+            
+            content = response.get("content", "").strip()
+            
+            # Clean up markdown if present
+            if content.startswith('```'):
+                content = content.split('\n', 1)[1] if '\n' in content else content[3:]
+            if content.endswith('```'):
+                content = content.rsplit('\n', 1)[0] if '\n' in content else content[:-3]
+            
+            suggestions = json.loads(content)
+            
             if isinstance(suggestions, list):
                 return suggestions
-        except Exception:
-            pass
-        return ["Provide quantifiable impact", "Include scope of responsibility", "Highlight challenges overcome"]
-
-    # ---------- Draft award citation ----------
-    def draft_award(self, award: str, achievement_data: dict, awardee_info: dict) -> str:
-        prompt = (
-            f"Draft a formal Coast Guard {award} citation using achievements {json.dumps(achievement_data)} "
-            f"and awardee info {json.dumps(awardee_info)}."
-        )
-        try:
-            resp = openai.ChatCompletion.create(
-                model="gpt-4o-2024-11-20",
-                messages=[{"role": "system", "content": "You draft official Coast Guard award citations."},
-                          {"role": "user", "content": prompt}],
-                temperature=0.7,
-            )
-            return resp.choices[0].message.content.strip()
+            else:
+                return list(suggestions.values()) if isinstance(suggestions, dict) else [str(suggestions)]
+                
         except Exception as e:
-            return f"[Unable to draft citation] {e}"
+            logger.error(f"Error generating suggestions: {e}")
+            
+            # Fallback suggestions based on missing data
+            return self._generate_fallback_suggestions(achievement_data)
+
+    def _generate_fallback_suggestions(self, achievement_data: Dict) -> List[str]:
+        """Generate fallback suggestions when API call fails."""
+        suggestions = []
+        
+        impacts = achievement_data.get('impacts', [])
+        leadership = achievement_data.get('leadership_details', [])
+        innovations = achievement_data.get('innovation_details', [])
+        
+        if len(impacts) < 3:
+            suggestions.append("Add more quantifiable impacts with specific numbers, percentages, or dollar amounts")
+        
+        if len(leadership) < 2:
+            suggestions.append("Include more leadership details: How many people did you supervise or lead?")
+        
+        if not achievement_data.get('scope') or 'not specified' in achievement_data.get('scope', '').lower():
+            suggestions.append("Clarify the scope of impact: Was this unit-level, district-level, or Coast Guard-wide?")
+        
+        if len(innovations) < 2:
+            suggestions.append("Highlight any innovative approaches, creative solutions, or process improvements")
+        
+        if len(achievement_data.get('challenges', [])) < 2:
+            suggestions.append("Describe specific challenges or obstacles that were overcome")
+        
+        suggestions.extend([
+            "Include any awards, recognitions, or commendations received for this work",
+            "Specify the time period over which these accomplishments occurred"
+        ])
+        
+        return suggestions[:6]  # Return max 6 suggestions
+
+    def draft_award(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
+        """Generate a formal award citation."""
+        prompt = f"""
+Draft a formal Coast Guard {award} citation using the following information:
+
+ACHIEVEMENT DATA:
+{json.dumps(achievement_data, indent=2)}
+
+AWARDEE INFORMATION:
+{json.dumps(awardee_info, indent=2)}
+
+Create a professional, formal citation that follows Coast Guard standards. Include:
+- Formal opening with awardee information
+- Specific accomplishments and their impacts
+- Leadership demonstrated
+- Scope and significance of contributions
+- Formal closing appropriate for this award level
+
+Return only the formatted citation text.
+"""
+        
+        try:
+            response = self._make_api_call(
+                messages=[
+                    {"role": "system", "content": "You draft official Coast Guard award citations in proper military format."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.4,
+                context="award citation drafting"
+            )
+            
+            if "error" in response:
+                return f"Unable to draft {award} citation at this time. Error: {response['error']}"
+            
+            return response.get("content", "").strip()
+            
+        except Exception as e:
+            logger.error(f"Error drafting citation: {e}")
+            return f"Unable to draft {award} citation at this time. Please try again or contact support."

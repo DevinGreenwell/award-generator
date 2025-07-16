@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const finalizeBtn = document.getElementById('finalizeBtn');
     const exportBtn = document.getElementById('exportBtn');
     const printBtn = document.getElementById('printBtn');
+    const clearSessionBtn = document.getElementById('clearSessionBtn');
     const newSessionBtn = document.getElementById('newSessionBtn');
     const saveSessionBtn = document.getElementById('saveSessionBtn');
     const loadSessionBtn = document.getElementById('loadSessionBtn');
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Awardee info fields
     const awardeeName = document.getElementById('awardeeName');
     const awardeeRank = document.getElementById('awardeeRank');
+    const awardeeUnit = document.getElementById('awardeeUnit');
     const dateRangeStart = document.getElementById('dateRangeStart');
     const dateRangeEnd = document.getElementById('dateRangeEnd');
     
@@ -54,9 +56,19 @@ document.addEventListener('DOMContentLoaded', function() {
     exportBtn.addEventListener('click', exportRecommendation);
     printBtn.addEventListener('click', printRecommendation);
     
-    newSessionBtn.addEventListener('click', newSession);
-    saveSessionBtn.addEventListener('click', saveSession);
-    loadSessionBtn.addEventListener('click', loadSession);
+    // Session management event listeners
+    if (clearSessionBtn) {
+        clearSessionBtn.addEventListener('click', clearSession);
+    }
+    if (newSessionBtn) {
+        newSessionBtn.addEventListener('click', newSession);
+    }
+    if (saveSessionBtn) {
+        saveSessionBtn.addEventListener('click', saveSession);
+    }
+    if (loadSessionBtn) {
+        loadSessionBtn.addEventListener('click', loadSession);
+    }
     
     // Functions
     function initChat() {
@@ -522,6 +534,50 @@ document.addEventListener('DOMContentLoaded', function() {
     function printRecommendation() {
         // Open print dialog
         window.print();
+    }
+    
+    function clearSession() {
+        if (confirm('Clear all current data? This will reset the conversation and recommendations.')) {
+            fetch('/api/session/clear', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reset local state
+                    sessionId = '';
+                    sessionName = '';
+                    workflowState = 'input';
+                    currentAward = '';
+                    
+                    // Clear form fields
+                    awardeeName.value = '';
+                    awardeeRank.value = '';
+                    if (awardeeUnit) awardeeUnit.value = '';
+                    dateRangeStart.value = '';
+                    dateRangeEnd.value = '';
+                    
+                    // Reinitialize chat
+                    initChat();
+                    
+                    // Show success message
+                    addMessage({
+                        role: 'assistant',
+                        content: 'Session cleared successfully. You can start fresh with new achievements.',
+                        timestamp: new Date().toISOString()
+                    });
+                } else {
+                    alert('Error clearing session. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing session:', error);
+                alert('Error clearing session. Please try again.');
+            });
+        }
     }
     
     function newSession() {
