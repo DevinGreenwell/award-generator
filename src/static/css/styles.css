@@ -83,24 +83,26 @@ header {
     position: relative;
     z-index: 99;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow-x: auto;
 }
 
 .awardee-info-row {
     display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
-    gap: 1.5rem;
+    gap: 2rem;
     align-items: center;
-    overflow-x: auto;
     padding: 0.5rem 0;
-    max-width: 100%;
+    min-width: fit-content;
 }
 
 .awardee-field {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     white-space: nowrap;
     flex-shrink: 0;
+    flex-grow: 0;
 }
 
 .awardee-field label {
@@ -148,6 +150,16 @@ header {
 
 .awardee-field input[type="date"] {
     width: 130px;
+}
+
+/* Force horizontal layout */
+.awardee-info * {
+    box-sizing: border-box;
+}
+
+.awardee-info-row > * {
+    display: inline-flex !important;
+    vertical-align: middle;
 }
 
 /* Specific field widths for better layout */
