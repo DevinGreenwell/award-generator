@@ -23,3 +23,9 @@ Thumbs.db
 
 # Log files
 *.log
+logs/
+
+# Upload and temporary files
+uploads/
+temp/
+sessions/

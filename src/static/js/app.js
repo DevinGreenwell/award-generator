@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sessionIdInput = document.getElementById('sessionIdInput');
     const sessionNameInput = document.getElementById('sessionNameInput');
     const awardContent = document.getElementById('awardContent');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
     
     // Awardee info fields
     const awardeeName = document.getElementById('awardeeName');
@@ -49,6 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sendMessage();
         }
     });
+    
+    // File upload event listeners
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileUpload);
     
     generateBtn.addEventListener('click', generateRecommendation);
     refreshBtn.addEventListener('click', refreshRecommendation);
@@ -166,6 +172,82 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Check file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please upload a PDF or Word document');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Check file size (max 10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            alert('File size must be less than 10MB');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Show uploading message
+        const uploadMsg = {
+            role: 'user',
+            content: `📎 Uploading ${file.name}...`,
+            timestamp: new Date().toISOString(),
+            isFileUpload: true
+        };
+        addMessage(uploadMsg);
+        
+        // Create FormData
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Upload file
+        fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add success message with extracted content
+                addMessage({
+                    role: 'assistant',
+                    content: data.message,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // If content was extracted, add it to the conversation
+                if (data.extracted_text) {
+                    // Send the extracted text as a message
+                    userInput.value = data.extracted_text;
+                    sendMessage();
+                }
+            } else {
+                addMessage({
+                    role: 'assistant',
+                    content: `Error: ${data.error}`,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
+            // Clear file input
+            fileInput.value = '';
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            addMessage({
+                role: 'assistant',
+                content: 'Error uploading file. Please try again.',
+                timestamp: new Date().toISOString()
+            });
+            fileInput.value = '';
+        });
+    }
+    
     function sendMessage() {
         const message = userInput.value.trim();
         if (!message) return;
@@ -227,6 +309,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add classes based on role
         messageDiv.classList.add(msg.role);
+        
+        // Add file upload class if applicable
+        if (msg.isFileUpload) {
+            messageDiv.classList.add('file-upload');
+        }
         
         // Set content
         contentDiv.innerHTML = msg.content;

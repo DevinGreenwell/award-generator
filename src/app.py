@@ -426,6 +426,35 @@ def api_finalize():
     })
 
 
+@app.route('/api/upload', methods=['POST'])
+@handle_errors
+def api_upload():
+    """Handle document upload and text extraction."""
+    # Check if file is in request
+    if 'file' not in request.files:
+        raise ValidationError('No file provided')
+    
+    file = request.files['file']
+    
+    # Process the file
+    from document_processor import document_processor
+    success, message, extracted_text = document_processor.process_file(file)
+    
+    if success:
+        logger.info(f"Successfully processed file: {file.filename}")
+        return jsonify({
+            'success': True,
+            'message': message,
+            'extracted_text': extracted_text
+        })
+    else:
+        logger.warning(f"Failed to process file: {message}")
+        return jsonify({
+            'success': False,
+            'error': message
+        }), 400
+
+
 @app.route('/api/export', methods=['POST'])
 @handle_errors
 def api_export():

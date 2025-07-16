@@ -228,24 +228,53 @@ main {
     margin-top: 0.25rem;
 }
 
+.message.file-upload {
+    background-color: #e3f2fd;
+    border: 1px solid #90caf9;
+    color: #1976d2;
+}
+
 .chat-input {
     display: flex;
+    flex-direction: column;
     padding: 0.5rem;
     background-color: white;
     border-top: 1px solid var(--border-color);
 }
 
 .chat-input textarea {
-    flex: 1;
+    width: 100%;
     padding: 0.5rem;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     resize: none;
     font-family: inherit;
+    margin-bottom: 0.5rem;
 }
 
-.chat-input button {
-    margin-left: 0.5rem;
+.chat-input-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.chat-input-actions button {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+#uploadBtn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+#uploadBtn:hover {
+    background-color: #5a6268;
+}
+
+.upload-icon {
+    font-size: 1.1rem;
 }
 
 /* Award Styles */

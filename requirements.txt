@@ -14,6 +14,9 @@ python-docx==0.8.11
 # Environment and configuration
 python-dotenv==1.0.0
 
+# Document processing
+PyPDF2==3.0.1
+
 # Optional: Enhanced sentence tokenization
 # Uncomment if you want better text processing
 # nltk==3.8.1

@@ -44,6 +44,10 @@ class Config:
     EXPORT_TEMP_DIR = os.getenv('EXPORT_TEMP_DIR', str(BASE_DIR / 'temp'))
     MAX_EXPORT_SIZE = int(os.getenv('MAX_EXPORT_SIZE', '10485760'))  # 10MB
     
+    # Upload settings
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+    MAX_UPLOAD_SIZE = int(os.getenv('MAX_UPLOAD_SIZE', '10485760'))  # 10MB
+    
     # Security settings
     ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')

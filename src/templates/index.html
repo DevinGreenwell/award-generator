@@ -213,8 +213,14 @@
                         <!-- Messages will be added here dynamically -->
                     </div>
                     <div class="chat-input">
-                        <textarea id="userInput" placeholder="Enter accomplishments here..." rows="3"></textarea>
-                        <button id="sendBtn" class="btn btn-primary">Send</button>
+                        <textarea id="userInput" placeholder="Enter accomplishments here or upload a document..." rows="3"></textarea>
+                        <div class="chat-input-actions">
+                            <input type="file" id="fileInput" accept=".pdf,.doc,.docx" style="display: none;">
+                            <button id="uploadBtn" class="btn btn-secondary" title="Upload PDF or Word document">
+                                <span class="upload-icon">📎</span> Upload
+                            </button>
+                            <button id="sendBtn" class="btn btn-primary">Send</button>
+                        </div>
                     </div>
                 </section>
 
