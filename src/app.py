@@ -169,9 +169,22 @@ def api_chat():
         "timestamp": datetime.now().isoformat()
     })
     
+    # Check if we have document context
+    document_text = get_session_data(session, 'document_text')
+    document_analysis = get_session_data(session, 'document_analysis')
+    
     # Prepare messages for OpenAI
+    system_content = "You are a helpful assistant helping to document Coast Guard achievements for award recommendations. Acknowledge the user's input and encourage them to continue sharing details."
+    
+    # Add document context to system message if available
+    if document_text:
+        system_content += f"\n\nIMPORTANT: You have access to a previously uploaded document. When the user asks about specific details from 'the document' or 'the uploaded document', you can refer to this content:\n\n{document_text[:5000]}"
+        if len(document_text) > 5000:
+            system_content += f"\n[Document continues - {len(document_text)} total characters]"
+        system_content += "\n\nWhen answering questions about the document, cite specific sections or details from the above content."
+    
     openai_messages = [
-        {"role": "system", "content": "You are a helpful assistant helping to document Coast Guard achievements for award recommendations. Acknowledge the user's input and encourage them to continue sharing details."}
+        {"role": "system", "content": system_content}
     ]
     
     # Add conversation history
@@ -450,6 +463,8 @@ def api_upload():
         # Store document analysis in session for later use
         if analysis:
             store_session_data(session, 'document_analysis', analysis)
+            # Also store the original extracted text for retrieval
+            store_session_data(session, 'document_text', extracted_text)
             
             # Add a user message with the document analysis
             messages = get_session_data(session, 'messages') or []
