@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // If there's a recommendation, show it
                 if (data.recommendation) {
-                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.improvements);
+                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions);
                     currentAward = data.recommendation.award;
                     workflowState = 'recommendation';
                     updateWorkflowUI();
@@ -220,20 +220,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     timestamp: new Date().toISOString()
                 });
                 
-                // If content was analyzed, show the analysis results
+                // If content was analyzed, store it and show simple confirmation
                 if (data.analysis || data.extracted_text) {
-                    const analysisContent = data.analysis || data.extracted_text;
-                    // Add the analysis as an assistant message
-                    addMessage({
-                        role: 'assistant',
-                        content: `📋 **Document Analysis Results:**\n\n${analysisContent}`,
-                        timestamp: new Date().toISOString()
-                    });
+                    // Store the analysis internally for later use
+                    window.documentAnalysis = data.analysis || data.extracted_text;
                     
-                    // Optionally prompt user to describe additional details
+                    // Show simple confirmation message
                     addMessage({
                         role: 'assistant',
-                        content: 'I\'ve analyzed your document. Feel free to add any additional achievements or context that might not be in the document.',
+                        content: `✅ Document analyzed successfully. I found achievements and accomplishments in your document.\n\nFeel free to add any additional context or achievements not mentioned in the document.`,
                         timestamp: new Date().toISOString()
                     });
                 }
@@ -370,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            displayAward(data.award, data.explanation, data.improvements);
+            displayAward(data.award, data.explanation, data.suggestions);
             currentAward = data.award;
             
             // Update workflow state
@@ -418,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            displayAward(data.award, data.explanation, data.improvements);
+            displayAward(data.award, data.explanation, data.suggestions);
             currentAward = data.award;
             
             // Update workflow state to recommendation (even if we were in finalized state)
@@ -466,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            displayAward(data.award, data.explanation, data.improvements);
+            displayAward(data.award, data.explanation, data.suggestions);
             currentAward = data.award;
             
             // Update workflow state
@@ -783,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayFinalAward(data.finalized_award.award, data.finalized_award.citation);
                     workflowState = 'finalized';
                 } else if (data.recommendation) {
-                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.improvements);
+                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions);
                     currentAward = data.recommendation.award;
                     workflowState = 'recommendation';
                 } else {

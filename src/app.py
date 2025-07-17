@@ -446,6 +446,19 @@ def api_upload():
         # Analyze the document for achievements
         analysis = document_processor.analyze_document_for_achievements(extracted_text)
         
+        # Store document analysis in session for later use
+        if analysis:
+            store_session_data(session, 'document_analysis', analysis)
+            
+            # Add a system message to track document was processed
+            messages = get_session_data(session, 'messages') or []
+            messages.append({
+                "role": "system",
+                "content": f"Document analyzed: {analysis}",
+                "timestamp": datetime.now().isoformat()
+            })
+            store_session_data(session, 'messages', messages)
+        
         return jsonify({
             'success': True,
             'message': f"Successfully analyzed {file.filename}",
