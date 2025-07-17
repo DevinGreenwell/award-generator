@@ -15,8 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const newSessionBtn = document.getElementById('newSessionBtn');
     const saveSessionBtn = document.getElementById('saveSessionBtn');
     const loadSessionBtn = document.getElementById('loadSessionBtn');
-    const sessionIdInput = document.getElementById('sessionIdInput');
-    const sessionNameInput = document.getElementById('sessionNameInput');
+    // Session elements not present in current HTML, using defaults
+    const sessionIdInput = { value: '' };
+    const sessionNameInput = { value: 'default' };
     const awardContent = document.getElementById('awardContent');
     const uploadBtn = document.getElementById('uploadBtn');
     const fileInput = document.getElementById('fileInput');
@@ -363,8 +364,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 awardee_info: awardeeInfo
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to generate recommendation');
+            }
             displayAward(data.award, data.explanation, data.suggestions);
             currentAward = data.award;
             
@@ -381,7 +390,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error generating recommendation:', error);
-            awardContent.innerHTML = '<div class="placeholder-text"><p>Error generating recommendation. Please try again.</p></div>';
+            const errorMessage = error.error || error.message || 'Unknown error occurred';
+            awardContent.innerHTML = `<div class="placeholder-text"><p>Error: ${errorMessage}</p><p>Please make sure you've described your achievements in the chat before generating a recommendation.</p></div>`;
+            
+            // Also add error to chat
+            addMessage({
+                role: 'assistant',
+                content: `❌ Error: ${errorMessage}`,
+                timestamp: new Date().toISOString()
+            });
         });
     }
     
