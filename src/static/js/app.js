@@ -515,6 +515,14 @@ document.addEventListener('DOMContentLoaded', function() {
             operational_device: operationalDevice.checked
         };
         
+        // Check if we have a current award
+        if (!currentAward) {
+            awardContent.innerHTML = '<div class="placeholder-text"><p>Error: No award recommendation found. Please generate a recommendation first.</p></div>';
+            return;
+        }
+        
+        console.log('Current award:', currentAward);  // Debug log
+        
         // Show loading state
         awardContent.innerHTML = '<div class="placeholder-text"><p>Improving recommendation...</p></div>';
         
@@ -530,8 +538,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 awardee_info: awardeeInfo
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Improve API response:', data);  // Debug log
+            
             // Display improvement suggestions
             if (data.suggestions && data.suggestions.length > 0) {
                 const improvementHtml = `
@@ -565,7 +580,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error improving recommendation:', error);
-            awardContent.innerHTML = '<div class="placeholder-text"><p>Error improving recommendation. Please try again.</p></div>';
+            const errorMessage = error.error || error.message || 'Unknown error';
+            awardContent.innerHTML = `<div class="placeholder-text"><p>Error: ${errorMessage}</p></div>`;
+            
+            // Also add error to chat
+            addMessage({
+                role: 'assistant',
+                content: `❌ Error improving recommendation: ${errorMessage}`,
+                timestamp: new Date().toISOString()
+            });
         });
     }
     
