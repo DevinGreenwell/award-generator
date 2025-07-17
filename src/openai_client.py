@@ -42,8 +42,8 @@ class OpenAIClient:
         self.max_retries = 3
         self.retry_delay = 1  # seconds
         
-        # Check if using a reasoning model
-        self.is_reasoning_model = self.model.startswith(('o1-preview', 'o1-mini'))
+        # Check if using a reasoning model (O1 or O4 series)
+        self.is_reasoning_model = self.model.startswith(('o1-preview', 'o1-mini', 'o4-preview', 'o4-mini'))
 
     def _handle_api_error(self, error: Exception, context: str) -> Dict:
         """Handle various OpenAI API errors with appropriate responses."""
@@ -97,6 +97,8 @@ class OpenAIClient:
             
             messages = processed_messages
             logger.info(f"Using reasoning model {self.model}, converted {len(messages)} messages")
+        else:
+            logger.info(f"Using standard model {self.model}")
         
         for attempt in range(self.max_retries):
             try:

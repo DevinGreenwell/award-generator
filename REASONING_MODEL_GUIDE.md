@@ -1,20 +1,25 @@
-# Switching to OpenAI Reasoning Models (O1)
+# Switching to OpenAI Reasoning Models (O1/O4)
 
 ## Quick Setup
 
-To switch to a reasoning model like `o1-mini`, simply set the environment variable:
+To switch to a reasoning model, simply set the environment variable:
 
 ```bash
-export OPENAI_MODEL="o1-mini"
+export OPENAI_MODEL="o4-mini-2025-04-16"
 ```
 
 Or in your `.env` file:
 ```
-OPENAI_MODEL=o1-mini
+OPENAI_MODEL=o4-mini-2025-04-16
 ```
 
 ## Supported Reasoning Models
 
+### O4 Series (Latest)
+- `o4-mini-2025-04-16` - Latest mini reasoning model with improved capabilities
+- `o4-preview` - Most capable O4 reasoning model
+
+### O1 Series (Previous Generation)
 - `o1-mini` - Faster, more cost-effective reasoning model
 - `o1-preview` - More capable but slower reasoning model
 

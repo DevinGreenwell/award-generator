@@ -26,7 +26,7 @@ class Config:
     
     # OpenAI settings
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini-2024-07-18')
+    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini-2024-07-18')  # Can use o4-mini-2025-04-16
     OPENAI_MAX_RETRIES = int(os.getenv('OPENAI_MAX_RETRIES', '3'))
     OPENAI_RETRY_DELAY = int(os.getenv('OPENAI_RETRY_DELAY', '1'))
     
