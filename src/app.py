@@ -201,7 +201,8 @@ def api_chat():
     
     return jsonify({
         "success": True,
-        "response": ai_response.get("content", "I understand. Please continue."),
+        "message": ai_response.get("content", "I understand. Please continue."),
+        "response": ai_response.get("content", "I understand. Please continue."),  # Keep for backwards compatibility
         "message_count": len(messages)
     })
 
