@@ -17,15 +17,15 @@ SCORING_WEIGHTS = {
     "emergency_response": 4
 }
 
-# Award thresholds (percentages) - Made more stringent
+# Award thresholds (percentages) - Adjusted to be more realistic
 AWARD_THRESHOLDS = {
-    "Medal of Honor": 96,
-    "Distinguished Service Medal": 90,
-    "Legion of Merit": 82,
-    "Meritorious Service Medal": 74,
-    "Coast Guard Commendation Medal": 65,
-    "Coast Guard Achievement Medal": 56,
-    "Coast Guard Letter of Commendation": 45
+    "Medal of Honor": 95,
+    "Distinguished Service Medal": 85,
+    "Legion of Merit": 75,
+    "Meritorious Service Medal": 65,
+    "Coast Guard Commendation Medal": 55,
+    "Coast Guard Achievement Medal": 45,
+    "Coast Guard Letter of Commendation": 30
 }
 
 # Detailed award criteria
@@ -44,57 +44,57 @@ AWARD_CRITERIA = {
         "description": "May be awarded to any person who distinguishes themselves by exceptionally meritorious service to the United States Government in a duty of great responsibility.",
         "threshold": 90,
         "min_requirements": {
-            "leadership": 4.7,
-            "impact": 4.7,
-            "scope": 4.7,
-            "quantifiable_results": 4.0
+            "leadership": 4.0,
+            "impact": 4.0,
+            "scope": 4.0,
+            "quantifiable_results": 3.5
         }
     },
     "Legion of Merit": {
         "description": "Awarded to officers who have performed exceptionally meritorious service, except as to the degree of responsibility of the DSM.",
         "threshold": 82,
         "min_requirements": {
-            "leadership": 4.2,
-            "impact": 4.2,
-            "scope": 4.2,
-            "quantifiable_results": 3.5
+            "leadership": 3.5,
+            "impact": 3.5,
+            "scope": 3.5,
+            "quantifiable_results": 3.0
         }
     },
     "Meritorious Service Medal": {
         "description": "May be awarded to any member who distinguishes themselves by outstanding meritorious achievement or service to the United States.",
         "threshold": 74,
         "min_requirements": {
-            "leadership": 3.8,
-            "impact": 3.8,
-            "scope": 4.0,
-            "quantifiable_results": 3.0
+            "leadership": 3.0,
+            "impact": 3.0,
+            "scope": 3.0,
+            "quantifiable_results": 2.5
         }
     },
     "Coast Guard Commendation Medal": {
         "description": "May be awarded to a person who distinguishes themselves by heroic or meritorious achievement or service.",
         "threshold": 65,
         "min_requirements": {
-            "leadership": 3.0,
-            "impact": 3.0,
-            "scope": 3.2,
-            "quantifiable_results": 2.5
+            "leadership": 2.5,
+            "impact": 2.5,
+            "scope": 2.5,
+            "quantifiable_results": 2.0
         }
     },
     "Coast Guard Achievement Medal": {
         "description": "May be awarded for professional and/or leadership achievement based on sustained performance or specific achievement of a superlative nature.",
         "threshold": 56,
         "min_requirements": {
-            "impact": 2.5,
-            "scope": 2.5,
-            "quantifiable_results": 2.0
+            "impact": 2.0,
+            "scope": 2.0,
+            "quantifiable_results": 1.5
         }
     },
     "Coast Guard Letter of Commendation": {
         "description": "May be awarded for an act or service resulting in unusual and/or outstanding achievement but lesser than that required for the Achievement Medal.",
         "threshold": 45,
         "min_requirements": {
-            "impact": 1.5,
-            "scope": 1.5
+            "impact": 1.0,
+            "scope": 1.0
         }
     }
 }

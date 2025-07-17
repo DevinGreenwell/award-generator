@@ -23,15 +23,15 @@ class CriteriaScorer:
         leadership_details = achievement_data.get('leadership_details', [])
         
         if len(leadership_details) >= 5:
-            score += 2.5  # Exceptional leadership variety (reduced from 3.0)
+            score += 3.5  # Exceptional leadership variety
         elif len(leadership_details) >= 4:
-            score += 2.0  # Strong leadership (reduced from 2.5)
+            score += 3.0  # Strong leadership
         elif len(leadership_details) >= 3:
-            score += 1.5  # Good leadership (reduced from 2.0)
+            score += 2.5  # Good leadership
         elif len(leadership_details) >= 2:
-            score += 1.0  # Some leadership (reduced from 1.5)
+            score += 2.0  # Some leadership
         elif len(leadership_details) >= 1:
-            score += 0.5  # Minimal leadership (reduced from 1.5)
+            score += 1.5  # Minimal leadership
         
         # Bonus from training_provided field - REDUCED
         training_provided = achievement_data.get('training_provided', [])
@@ -48,21 +48,22 @@ class CriteriaScorer:
                             if keyword in combined_text_lower)
         score += min(1.0, keyword_matches * 0.1)  # Max 1.0 bonus from keywords
         
-        # Personnel number requirements - MORE STRINGENT
+        # Personnel number requirements - MORE REASONABLE
         personnel_numbers = re.findall(r'(\d+)\s*(?:people|personnel|staff|members|team|subordinates)', combined_text)
         if personnel_numbers:
             max_personnel = max([int(num) for num in personnel_numbers])
-            if max_personnel >= 150:
-                score += 2      # Requires 150+ people (was 100)
-            elif max_personnel >= 75:
-                score += 1.5    # Requires 75+ people (was 50)
-            elif max_personnel >= 40:
-                score += 1      # Requires 40+ people (was 25)
-            elif max_personnel >= 20:
-                score += 0.5    # Requires 20+ people (was 10)
+            if max_personnel >= 100:
+                score += 2      # Large team
+            elif max_personnel >= 50:
+                score += 1.5    # Medium-large team
+            elif max_personnel >= 25:
+                score += 1      # Medium team
             elif max_personnel >= 10:
-                score += 0.25   # Requires 10+ people (was 5)
-            # Less than 10 people = no bonus
+                score += 0.75   # Small-medium team
+            elif max_personnel >= 5:
+                score += 0.5    # Small team
+            elif max_personnel >= 2:
+                score += 0.25   # Very small team
         
         return normalize_score(score)
     
@@ -81,19 +82,19 @@ class CriteriaScorer:
             if any(char.isdigit() for char in impact) or any(word in impact.lower() for word in ['percent', '%', 'saved', 'reduced', 'increased', 'eliminated']):
                 measurable_impacts += 1
         
-        # Score based on MEASURABLE impacts primarily
+        # Score based on MEASURABLE impacts
         if measurable_impacts >= 4:
-            score += 2.5  # Multiple measurable impacts
+            score += 3.0  # Multiple measurable impacts
         elif measurable_impacts >= 3:
-            score += 2.0
+            score += 2.5
         elif measurable_impacts >= 2:
-            score += 1.5
+            score += 2.0
         elif measurable_impacts >= 1:
-            score += 1.0
+            score += 1.5
         
-        # Reduced credit for non-measurable impacts
+        # Credit for non-measurable impacts too
         non_measurable = len(impacts) - measurable_impacts
-        score += min(0.5, non_measurable * 0.1)  # Max 0.5 for non-measurable
+        score += min(1.0, non_measurable * 0.25)  # Max 1.0 for non-measurable
         
         # Keyword analysis - REDUCED WEIGHT
         high_count = sum(1 for keyword in IMPACT_KEYWORDS['high'] if keyword in combined_text_lower)
@@ -139,15 +140,15 @@ class CriteriaScorer:
                 significant_innovations += 1
         
         if significant_innovations >= 3:
-            score += 2.0  # Multiple significant innovations
+            score += 3.0  # Multiple significant innovations
         elif significant_innovations >= 2:
-            score += 1.25
+            score += 2.5
         elif significant_innovations >= 1:
-            score += 0.75
+            score += 2.0
         
-        # Basic innovation credit (reduced)
+        # Basic innovation credit
         basic_innovations = len(innovations) - significant_innovations
-        score += min(0.5, basic_innovations * 0.15)
+        score += min(1.5, basic_innovations * 0.5)
         
         # Count keyword occurrences - REDUCED WEIGHT
         keyword_matches = sum(1 for keyword in INNOVATION_KEYWORDS if keyword in combined_text_lower)
@@ -231,15 +232,15 @@ class CriteriaScorer:
             if any(indicator in metric.lower() for indicator in ['million', 'thousand', '%', 'percent', 'hours', 'days saved', 'cost savings', '$']):
                 high_value_metrics += 1
         
-        # Score based on HIGH-VALUE metrics primarily
+        # Score based on HIGH-VALUE metrics
         if high_value_metrics >= 5:
-            score += 3.5  # Exceptional quantification with significant values
+            score += 4.0  # Exceptional quantification with significant values
         elif high_value_metrics >= 3:
-            score += 2.5  # Strong quantification
+            score += 3.5  # Strong quantification
         elif high_value_metrics >= 2:
-            score += 1.5  # Some significant metrics
+            score += 2.5  # Some significant metrics
         elif high_value_metrics >= 1:
-            score += 0.75  # At least one significant metric
+            score += 1.5  # At least one significant metric
         
         # Reduced credit for basic metrics
         basic_metrics = len(metrics) - high_value_metrics
