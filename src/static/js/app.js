@@ -532,8 +532,25 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            displayAward(data.award, data.explanation, data.suggestions);
-            currentAward = data.award;
+            // Display improvement suggestions
+            if (data.suggestions && data.suggestions.length > 0) {
+                const improvementHtml = `
+                    <div class="improvement-suggestions">
+                        <h3>Improvement Suggestions for ${data.current_award}</h3>
+                        <p>Here are ways to strengthen your award recommendation:</p>
+                        <ul>
+                            ${data.suggestions.map(s => `<li>${s}</li>`).join('')}
+                        </ul>
+                        <p><strong>Current Score Breakdown:</strong></p>
+                        <ul>
+                            ${Object.entries(data.current_scores || {}).map(([key, value]) => 
+                                `<li>${key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}: ${value}/5</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+                awardContent.innerHTML = improvementHtml;
+            }
             
             // Update workflow state
             workflowState = 'improvement';
@@ -542,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add system message to chat
             addMessage({
                 role: 'assistant',
-                content: 'I\'ve improved the recommendation based on the information provided. You can continue to improve it, refresh for a new recommendation, or finalize it to generate the award citation.',
+                content: `I've analyzed your current ${data.current_award} recommendation and provided specific suggestions to strengthen it. Review the suggestions above to improve your chances of a higher award.`,
                 timestamp: new Date().toISOString()
             });
         })
