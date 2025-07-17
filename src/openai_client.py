@@ -41,6 +41,9 @@ class OpenAIClient:
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini-2024-07-18")
         self.max_retries = 3
         self.retry_delay = 1  # seconds
+        
+        # Check if using a reasoning model
+        self.is_reasoning_model = self.model.startswith(('o1-preview', 'o1-mini'))
 
     def _handle_api_error(self, error: Exception, context: str) -> Dict:
         """Handle various OpenAI API errors with appropriate responses."""
@@ -69,15 +72,44 @@ class OpenAIClient:
     def _make_api_call(self, messages: List[Dict], temperature: float = 0.7, 
                       max_tokens: Optional[int] = None, context: str = "API call") -> Dict:
         """Make an API call with retry logic."""
+        # Prepare messages for reasoning models
+        if self.is_reasoning_model:
+            # O1 models don't support system messages, merge them into user messages
+            processed_messages = []
+            system_content = ""
+            
+            for msg in messages:
+                if msg["role"] == "system":
+                    system_content += msg["content"] + "\n\n"
+                else:
+                    if system_content and msg["role"] == "user":
+                        # Prepend system content to first user message
+                        msg_copy = msg.copy()
+                        msg_copy["content"] = f"{system_content}Instructions: {msg['content']}"
+                        processed_messages.append(msg_copy)
+                        system_content = ""
+                    else:
+                        processed_messages.append(msg)
+            
+            # If there's remaining system content, add it as a user message
+            if system_content:
+                processed_messages.insert(0, {"role": "user", "content": system_content})
+            
+            messages = processed_messages
+            logger.info(f"Using reasoning model {self.model}, converted {len(messages)} messages")
+        
         for attempt in range(self.max_retries):
             try:
                 kwargs = {
                     "model": self.model,
-                    "messages": messages,
-                    "temperature": temperature
+                    "messages": messages
                 }
-                if max_tokens:
-                    kwargs["max_tokens"] = max_tokens
+                
+                # O1 models don't support temperature or max_tokens
+                if not self.is_reasoning_model:
+                    kwargs["temperature"] = temperature
+                    if max_tokens:
+                        kwargs["max_tokens"] = max_tokens
                 
                 response = openai.ChatCompletion.create(**kwargs)
                 return response.choices[0].message
