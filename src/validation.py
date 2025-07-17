@@ -63,7 +63,7 @@ class AwardeeInfoValidator(BaseValidator):
         cleaned['unit'] = cls.validate_optional(data, 'unit', default='')
         cleaned['position'] = cls.validate_optional(data, 'position', default='')
         cleaned['service_number'] = cls.validate_optional(data, 'service_number', default='')
-        cleaned['operational_device'] = cls.validate_optional(data, 'operational_device', default=False)
+        cleaned['operational_device'] = cls.validate_optional(data, 'operational_device', field_type=bool, default=False)
         
         # Date validation
         date_start = cls.validate_optional(data, 'date_start')
