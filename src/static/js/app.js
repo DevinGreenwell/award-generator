@@ -220,11 +220,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     timestamp: new Date().toISOString()
                 });
                 
-                // If content was extracted, add it to the conversation
-                if (data.extracted_text) {
-                    // Send the extracted text as a message
-                    userInput.value = data.extracted_text;
-                    sendMessage();
+                // If content was analyzed, show the analysis results
+                if (data.analysis || data.extracted_text) {
+                    const analysisContent = data.analysis || data.extracted_text;
+                    // Add the analysis as an assistant message
+                    addMessage({
+                        role: 'assistant',
+                        content: `📋 **Document Analysis Results:**\n\n${analysisContent}`,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Optionally prompt user to describe additional details
+                    addMessage({
+                        role: 'assistant',
+                        content: 'I\'ve analyzed your document. Feel free to add any additional achievements or context that might not be in the document.',
+                        timestamp: new Date().toISOString()
+                    });
                 }
             } else {
                 addMessage({

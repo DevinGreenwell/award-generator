@@ -442,10 +442,15 @@ def api_upload():
     
     if success:
         logger.info(f"Successfully processed file: {file.filename}")
+        
+        # Analyze the document for achievements
+        analysis = document_processor.analyze_document_for_achievements(extracted_text)
+        
         return jsonify({
             'success': True,
-            'message': message,
-            'extracted_text': extracted_text
+            'message': f"Successfully analyzed {file.filename}",
+            'analysis': analysis,
+            'extracted_text': analysis  # Send analysis as extracted_text for compatibility
         })
     else:
         logger.warning(f"Failed to process file: {message}")

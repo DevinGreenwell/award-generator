@@ -164,6 +164,47 @@ class DocumentProcessor:
             if os.path.exists(file_path):
                 os.remove(file_path)
             return False, f"Error processing file: {str(e)}", None
+    
+    def analyze_document_for_achievements(self, text: str) -> str:
+        """Analyze document text to extract achievement information."""
+        try:
+            from openai_client import OpenAIClient
+            client = OpenAIClient()
+            
+            # Create a specific prompt for analyzing the document
+            analysis_prompt = """Analyze the following document to identify achievements and accomplishments for a military award recommendation. Think through your analysis step-by-step.
+
+First, identify the context: What type of document is this? What time period does it cover? What role/position is described?
+
+Then extract and categorize:
+1. **Key Achievements**: Specific accomplishments with measurable outcomes
+2. **Leadership Impact**: Examples of leading teams, mentoring, or organizational influence  
+3. **Innovation & Initiative**: Process improvements, new solutions, or creative problem-solving
+4. **Operational Excellence**: Mission success, readiness improvements, or performance metrics
+5. **Challenges Overcome**: Difficult situations handled effectively
+6. **Scope of Impact**: Unit-level, command-level, service-wide, or joint/international
+
+For each achievement found:
+- Explain WHY it's significant
+- Identify the IMPACT (quantify when possible)
+- Note any RECOGNITION already received
+
+Document content:
+{text}
+
+Provide a comprehensive analysis that helps build a strong award recommendation. If information is missing, suggest specific questions to ask."""
+
+            messages = [
+                {"role": "system", "content": "You are a military achievement analyst helping to identify accomplishments for award recommendations. Be specific and focus on concrete achievements."},
+                {"role": "user", "content": analysis_prompt.format(text=text[:5000])}  # Limit text to avoid token limits
+            ]
+            
+            response = client.chat_completion(messages)
+            return response.get("content", "No achievements identified.")
+            
+        except Exception as e:
+            logger.error(f"Error analyzing document: {e}")
+            return f"Error analyzing document: {str(e)}"
 
 
 # Global document processor instance
