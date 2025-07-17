@@ -57,7 +57,16 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileUpload);
     
-    generateBtn.addEventListener('click', generateRecommendation);
+    generateBtn.addEventListener('click', () => {
+        // Debug: Check session state first
+        fetch('/api/debug/session')
+            .then(r => r.json())
+            .then(data => {
+                console.log('Session state before generation:', data);
+                generateRecommendation();
+            })
+            .catch(() => generateRecommendation());
+    });
     refreshBtn.addEventListener('click', refreshRecommendation);
     improveBtn.addEventListener('click', improveRecommendation);
     finalizeBtn.addEventListener('click', finalizeAward);
@@ -223,8 +232,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // If content was analyzed, store it and show simple confirmation
                 if (data.analysis || data.extracted_text) {
+                    const analysisContent = data.analysis || data.extracted_text;
+                    
                     // Store the analysis internally for later use
-                    window.documentAnalysis = data.analysis || data.extracted_text;
+                    window.documentAnalysis = analysisContent;
+                    
+                    // Add a hidden user message with the document content
+                    // This ensures the backend sees it as user input
+                    addMessage({
+                        role: 'user',
+                        content: `[Document uploaded and analyzed - content processed in background]`,
+                        timestamp: new Date().toISOString()
+                    });
                     
                     // Show simple confirmation message
                     addMessage({

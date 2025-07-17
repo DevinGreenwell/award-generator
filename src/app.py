@@ -450,11 +450,11 @@ def api_upload():
         if analysis:
             store_session_data(session, 'document_analysis', analysis)
             
-            # Add a system message to track document was processed
+            # Add a user message with the document analysis
             messages = get_session_data(session, 'messages') or []
             messages.append({
-                "role": "system",
-                "content": f"Document analyzed: {analysis}",
+                "role": "user",
+                "content": f"Document content and analysis: {analysis}",
                 "timestamp": datetime.now().isoformat()
             })
             store_session_data(session, 'messages', messages)
