@@ -19,7 +19,7 @@ ALLOWED_EXTENSIONS = {
 }
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-MAX_EXTRACTED_LENGTH = 10000  # Maximum characters to extract
+MAX_EXTRACTED_LENGTH = 50000  # Maximum characters to extract (increased for full documents)
 
 
 class DocumentProcessor:
@@ -196,7 +196,7 @@ Provide a comprehensive analysis that helps build a strong award recommendation.
 
             messages = [
                 {"role": "system", "content": "You are a military achievement analyst helping to identify accomplishments for award recommendations. Be specific and focus on concrete achievements."},
-                {"role": "user", "content": analysis_prompt.format(text=text[:5000])}  # Limit text to avoid token limits
+                {"role": "user", "content": analysis_prompt.format(text=text[:15000])}  # Increased limit for better analysis
             ]
             
             response = client.chat_completion(messages)

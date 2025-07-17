@@ -178,8 +178,10 @@ def api_chat():
     
     # Add document context to system message if available
     if document_text:
-        system_content += f"\n\nIMPORTANT: You have access to a previously uploaded document. When the user asks about specific details from 'the document' or 'the uploaded document', you can refer to this content:\n\n{document_text[:5000]}"
-        if len(document_text) > 5000:
+        # Include more of the document for better retrieval
+        doc_limit = 20000  # Increased limit for document context
+        system_content += f"\n\nIMPORTANT: You have access to a previously uploaded document. When the user asks about specific details from 'the document' or 'the uploaded document', you can refer to this content:\n\n{document_text[:doc_limit]}"
+        if len(document_text) > doc_limit:
             system_content += f"\n[Document continues - {len(document_text)} total characters]"
         system_content += "\n\nWhen answering questions about the document, cite specific sections or details from the above content."
     
