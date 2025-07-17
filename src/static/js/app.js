@@ -1,5 +1,40 @@
 // Main JavaScript for Coast Guard Award Writing Tool
 
+// Simple markdown parser
+function parseMarkdown(text) {
+    if (!text) return '';
+    
+    // Convert markdown to HTML
+    return text
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // Bold
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+        // Italic (be careful not to match bold)
+        .replace(/(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+        .replace(/(?<!_)_(?!_)([^_]+)(?<!_)_(?!_)/g, '<em>$1</em>')
+        // Lists
+        .replace(/^\* (.+)$/gim, '<li>$1</li>')
+        .replace(/^\d+\. (.+)$/gim, '<li>$1</li>')
+        // Wrap consecutive list items
+        .replace(/(<li>.*<\/li>\s*)+/g, function(match) {
+            const isOrdered = match.includes('1.');
+            return isOrdered ? '<ol>' + match + '</ol>' : '<ul>' + match + '</ul>';
+        })
+        // Line breaks
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        // Wrap content in paragraphs
+        .replace(/^([^<].*)$/gim, '<p>$1</p>')
+        // Clean up
+        .replace(/<p><\/p>/g, '')
+        .replace(/<p>(<[houl])/g, '$1')
+        .replace(/(<\/[houl].*?>)<\/p>/g, '$1');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const chatMessages = document.getElementById('chatMessages');
@@ -341,8 +376,8 @@ document.addEventListener('DOMContentLoaded', function() {
             messageDiv.classList.add('file-upload');
         }
         
-        // Set content
-        contentDiv.innerHTML = msg.content;
+        // Set content with markdown parsing
+        contentDiv.innerHTML = parseMarkdown(msg.content);
         
         // Set time if available
         if (msg.timestamp) {
