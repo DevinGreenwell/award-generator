@@ -456,6 +456,15 @@ Return ONLY the JSON array, no other text.
 
     def draft_award(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
         """Generate a formal award citation compliant with CG standards."""
+        # Try to use the new citation generator for rich narratives
+        try:
+            from citation_generator import CitationGenerator
+            generator = CitationGenerator()
+            citation = generator.generate_citation(award, awardee_info, achievement_data)
+            return citation
+        except ImportError:
+            logger.warning("CitationGenerator not available, falling back to CitationFormatter")
+            
         # Check if CitationFormatter is available
         if CitationFormatter is None:
             # Fallback to the old method if CitationFormatter is not available
