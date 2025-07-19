@@ -425,10 +425,17 @@ def api_finalize():
     # Generate final citation
     citation = openai_client.draft_award(award, achievement_data, awardee_info)
     
+    # Format citation for better display in the UI
+    # The citation comes with line breaks for the document, but we want it readable in the app
+    display_citation = citation.replace('\n', ' ')
+    # Clean up extra spaces
+    display_citation = ' '.join(display_citation.split())
+    
     # Store finalized award in file-based session
     finalized_data = {
         'award': award,
-        'citation': citation,
+        'citation': citation,  # Store original for export
+        'display_citation': display_citation,  # Store display version
         'finalized_at': datetime.now().isoformat()
     }
     store_session_data(session, 'finalized_award', finalized_data)
@@ -436,7 +443,7 @@ def api_finalize():
     return jsonify({
         'success': True,
         'award': award,
-        'citation': citation
+        'citation': display_citation  # Send display version to UI
     })
 
 
@@ -600,13 +607,23 @@ def download_docx():
 @handle_errors
 def get_session():
     """Get current session data."""
+    # Get finalized award data
+    finalized_award = get_session_data(session, 'finalized_award')
+    
+    # If we have a finalized award, ensure it has display_citation
+    if finalized_award and 'display_citation' not in finalized_award:
+        # Old format - create display version from original citation
+        original_citation = finalized_award.get('citation', '')
+        display_citation = ' '.join(original_citation.replace('\n', ' ').split())
+        finalized_award['display_citation'] = display_citation
+    
     session_data = {
         "session_id": get_session_data(session, 'session_id') or 'default',
         "session_name": get_session_data(session, 'session_name') or '',
         "messages": get_session_data(session, 'messages') or [],
         "awardee_info": get_session_data(session, 'awardee_info') or {},
         "recommendation": get_session_data(session, 'recommendation'),
-        "finalized_award": get_session_data(session, 'finalized_award')
+        "finalized_award": finalized_award
     }
     return jsonify(session_data)
 

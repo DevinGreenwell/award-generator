@@ -179,7 +179,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // If there's a finalized award, show it
                 if (data.finalized_award) {
-                    displayFinalAward(data.finalized_award.award, data.finalized_award.citation);
+                    // Use display_citation if available, otherwise use citation
+                    const citationToDisplay = data.finalized_award.display_citation || data.finalized_award.citation;
+                    displayFinalAward(data.finalized_award.award, citationToDisplay);
                     workflowState = 'finalized';
                     updateWorkflowUI();
                 }
@@ -736,7 +738,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set content
         titleEl.textContent = award;
-        citationEl.innerHTML = citation;
+        
+        // Format the citation for better display
+        // The citation may come as a single paragraph or with line breaks
+        // We'll display it as a clean paragraph for readability
+        const formattedCitation = `
+            <div class="citation-content">
+                <p>${citation}</p>
+            </div>
+        `;
+        citationEl.innerHTML = formattedCitation;
         
         // Clear and add to award content
         awardContent.innerHTML = '';
@@ -947,7 +958,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Show recommendation or finalized award if available
                 if (data.finalized_award) {
-                    displayFinalAward(data.finalized_award.award, data.finalized_award.citation);
+                    // Use display_citation if available, otherwise use citation
+                    const citationToDisplay = data.finalized_award.display_citation || data.finalized_award.citation;
+                    displayFinalAward(data.finalized_award.award, citationToDisplay);
                     workflowState = 'finalized';
                 } else if (data.recommendation) {
                     displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions, data.recommendation.scores);
