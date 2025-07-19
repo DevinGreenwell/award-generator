@@ -71,22 +71,22 @@ class CitationGenerator:
         "Coast Guard Letter of Commendation": "By your meritorious service you have upheld the highest traditions of the United States Coast Guard."
     }
     
-    # Character limits for each award (based on line limits x 95 chars per line)
+    # Character limits for each award (based on line limits x 125 chars per line)
     CHARACTER_LIMITS = {
-        "Distinguished Service Medal": 1520,  # 16 lines x 95 chars
-        "Legion of Merit": 1520,              # 16 lines x 95 chars
-        "Meritorious Service Medal": 1140,   # 12 lines x 95 chars
-        "Coast Guard Commendation Medal": 1140,  # 12 lines x 95 chars
-        "Coast Guard Achievement Medal": 1140,    # 12 lines x 95 chars
-        "Coast Guard Letter of Commendation": 1140,  # 12 lines x 95 chars
-        "Air Medal": 1140,                    # 12 lines x 95 chars
-        "Distinguished Flying Cross": 1330,   # 14 lines x 95 chars
-        "Coast Guard Medal": 1330,            # 14 lines x 95 chars
-        "Bronze Star Medal": 1330            # 14 lines x 95 chars
+        "Distinguished Service Medal": 2000,  # 16 lines x 125 chars
+        "Legion of Merit": 2000,              # 16 lines x 125 chars
+        "Meritorious Service Medal": 1500,   # 12 lines x 125 chars
+        "Coast Guard Commendation Medal": 1500,  # 12 lines x 125 chars
+        "Coast Guard Achievement Medal": 1500,    # 12 lines x 125 chars
+        "Coast Guard Letter of Commendation": 1500,  # 12 lines x 125 chars
+        "Air Medal": 1500,                    # 12 lines x 125 chars
+        "Distinguished Flying Cross": 1750,   # 14 lines x 125 chars
+        "Coast Guard Medal": 1750,            # 14 lines x 125 chars
+        "Bronze Star Medal": 1750            # 14 lines x 125 chars
     }
     
     def __init__(self):
-        self.max_line_length = 95  # Characters per line for landscape
+        self.max_line_length = 125  # Characters per line for landscape
         
     def generate_citation(self, award_type: str, awardee_info: Dict, achievement_data: Dict) -> str:
         """
