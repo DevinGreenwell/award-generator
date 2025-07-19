@@ -534,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ 
                 session_id: sessionId,
-                award: currentAward,
+                current_award: currentAward,
                 awardee_info: awardeeInfo
             })
         })
