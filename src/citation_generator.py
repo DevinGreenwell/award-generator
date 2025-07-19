@@ -122,21 +122,15 @@ class CitationGenerator:
         opening = self._build_opening(award_type, rank, last_name, position, unit, time_period)
         narrative_parts.append(opening)
         
-        # Build rich narrative body - aim for MORE content than needed
+        # Build narrative body focused on quality over quantity
         body_sentences = self._build_narrative_body(achievement_data, rank, last_name, pronoun)
         
-        # Add extra detail sentences - we want to fill all available lines
+        # Add 1-2 additional context sentences if needed for completeness
         extra_sentences = self._generate_additional_context(achievement_data, rank, last_name, pronoun)
         
-        # Calculate how many sentences we need to reach line limit
-        max_lines = self.LINE_LIMITS.get(award_type, 12)
-        # Estimate 2-3 lines for opening, 2 lines for closing
-        target_body_sentences = max_lines - 4
-        
-        # Add extra sentences to reach our target
-        if len(body_sentences) < target_body_sentences:
-            sentences_needed = target_body_sentences - len(body_sentences)
-            body_sentences.extend(extra_sentences[:sentences_needed])
+        # Add a few extra sentences for context, but don't overdo it
+        if len(body_sentences) < 6:  # Reasonable body content
+            body_sentences.extend(extra_sentences[:2])  # Just add 1-2 more
         
         narrative_parts.extend(body_sentences)
         
@@ -147,8 +141,8 @@ class CitationGenerator:
         # Combine into full narrative
         full_citation = " ".join(narrative_parts)
         
-        # Format to maximize character usage per line
-        formatted_citation = self._format_to_maximize_usage(full_citation, award_type)
+        # Format with left alignment - no forced justification
+        formatted_citation = self._format_left_aligned(full_citation, award_type)
         
         return formatted_citation
         
@@ -428,82 +422,36 @@ class CitationGenerator:
         return sentences
         
     def _generate_additional_context(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
-        """Generate additional contextual sentences to fill space."""
+        """Generate focused additional context sentences."""
         additional = []
         pronoun_possessive = 'her' if pronoun == 'she' else 'his'
-        pronoun_cap = pronoun.capitalize()
         pronoun_poss_cap = 'Her' if pronoun == 'she' else 'His'
         
-        # Add time-based context
-        time_period = achievement_data.get('time_period', '')
-        if 'year' in time_period.lower() or 'month' in time_period.lower():
-            duration_match = re.search(r'(\d+)\s*(year|month)', time_period.lower())
-            if duration_match:
-                num = duration_match.group(1)
-                unit = duration_match.group(2)
-                additional.append(f"Throughout this {num}-{unit} period, {pronoun} maintained unwavering commitment to excellence.")
-                additional.append(f"{pronoun_poss_cap} consistent dedication during this timeframe established new standards of professional excellence.")
+        # Pick the most relevant context based on achievement data
         
-        # Add quantitative summaries
+        # Quantitative impact summary (if significant numbers present)
         all_numbers = []
         for field in ['achievements', 'impacts', 'quantifiable_metrics']:
             for item in achievement_data.get(field, []):
                 numbers = re.findall(r'\$?[\d,]+\.?\d*\s*(?:million|thousand|percent|%)?', str(item))
                 all_numbers.extend(numbers)
         
-        if len(all_numbers) >= 3:
-            additional.append(f"These remarkable metrics underscore {pronoun_possessive} exceptional contribution to mission success.")
-            additional.append(f"The quantifiable results achieved demonstrate {pronoun_possessive} unparalleled ability to deliver measurable outcomes.")
-        elif len(all_numbers) >= 1:
-            additional.append(f"{pronoun_poss_cap} results-oriented approach yielded significant measurable improvements across all operational areas.")
+        if len(all_numbers) >= 2:
+            additional.append(f"These quantifiable results demonstrate {pronoun_possessive} exceptional ability to deliver measurable outcomes.")
         
-        # Add leadership amplification
+        # Leadership context (if leadership present)
         if achievement_data.get('leadership_details'):
-            additional.append(f"Under {pronoun_possessive} inspired guidance, unit morale and operational effectiveness reached unprecedented levels.")
-            additional.append(f"{pronoun_poss_cap} leadership philosophy fostered an environment of continuous improvement and professional growth.")
-            additional.append(f"Team members consistently praised {pronoun_possessive} ability to motivate and inspire superior performance.")
+            additional.append(f"{pronoun_poss_cap} leadership fostered an environment of continuous improvement and professional excellence.")
         
-        # Add innovation emphasis
+        # Innovation context (if innovation present)
         if achievement_data.get('innovation_details'):
-            additional.append(f"This innovative mindset permeated throughout the organization, inspiring others to pursue creative solutions.")
-            additional.append(f"{pronoun_poss_cap} forward-thinking approach revolutionized traditional methods and established new best practices.")
-            additional.append(f"The creative solutions implemented will serve as a model for future Coast Guard initiatives.")
+            additional.append(f"The innovative solutions implemented will serve as a model for future Coast Guard initiatives.")
         
-        # Add collaboration context
-        if any('team' in str(item).lower() or 'collaboration' in str(item).lower() for item in achievement_data.get('achievements', [])):
-            additional.append(f"{pronoun_poss_cap} collaborative approach strengthened inter-departmental relationships and operational synergy.")
-            additional.append(f"Through exceptional teamwork and coordination, {pronoun} fostered unprecedented levels of cooperation.")
+        # Mission impact
+        additional.append(f"{pronoun_poss_cap} actions directly enhanced operational readiness and mission accomplishment.")
         
-        # Add professional development
-        additional.append(f"{pronoun_poss_cap} commitment to professional excellence inspired peers to pursue their own development goals.")
-        additional.append(f"The expertise demonstrated throughout this period established {pronoun} as a subject matter expert.")
-        
-        # Add operational impact
-        additional.append(f"{pronoun_poss_cap} actions directly enhanced operational readiness and mission accomplishment capabilities.")
-        additional.append(f"These contributions significantly improved the unit's ability to execute its critical mission.")
-        
-        # Add resource management
-        if any('saved' in str(item).lower() or 'reduced' in str(item).lower() or 'cost' in str(item).lower() for item in achievement_data.get('impacts', [])):
-            additional.append(f"{pronoun_poss_cap} resource management initiatives resulted in significant cost savings and efficiency gains.")
-            additional.append(f"Through careful stewardship of resources, {pronoun} maximized operational capabilities while minimizing expenditures.")
-        
-        # Add process improvement
-        if any('process' in str(item).lower() or 'system' in str(item).lower() or 'procedure' in str(item).lower() for item in achievement_data.get('achievements', [])):
-            additional.append(f"The process improvements implemented streamlined operations and enhanced overall organizational effectiveness.")
-            additional.append(f"{pronoun_poss_cap} systematic approach to problem-solving yielded sustainable long-term improvements.")
-        
-        # Add recognition context
-        additional.append(f"{pronoun_poss_cap} exceptional performance earned widespread recognition from senior leadership and peers alike.")
+        # Professional standards
         additional.append(f"The professional standards demonstrated serve as an exemplary model for others to emulate.")
-        
-        # Add mission alignment
-        additional.append(f"Every action taken directly supported and advanced the Coast Guard's core mission objectives.")
-        additional.append(f"{pronoun_poss_cap} unwavering focus on mission accomplishment ensured successful completion of all assigned tasks.")
-        
-        # Add closing amplifications
-        additional.append(f"The lasting legacy of {pronoun_possessive} contributions will benefit the Coast Guard for years to come.")
-        additional.append(f"{pronoun_poss_cap} exemplary service during this period epitomizes the Coast Guard's core values.")
-        additional.append(f"These outstanding achievements reflect great credit upon {pronoun} and the United States Coast Guard.")
         
         return additional
         
@@ -522,120 +470,72 @@ class CitationGenerator:
         pronoun_reflexive = 'herself' if pronoun == 'she' else 'himself'
         return closing_template.format(name=member_ref, pronoun=pronoun_reflexive)
         
-    def _format_to_lines(self, citation: str, award_type: str) -> str:
-        """Format citation to maximize lines within limits."""
+    def _format_left_aligned(self, citation: str, award_type: str) -> str:
+        """Format citation with left alignment, respecting line count limits."""
         max_lines = self.LINE_LIMITS.get(award_type, 12)
         
-        # Split into words
+        # Simply wrap text at word boundaries, no forced justification
         words = citation.split()
-        
-        # Build lines trying to maximize usage
         lines = []
         current_line = []
-        current_length = 0
         
         for word in words:
-            word_length = len(word)
-            
             # Check if adding this word would exceed line length
-            # Calculate the actual line length including spaces
-            if current_line:
-                test_line = " ".join(current_line + [word])
-                if len(test_line) > self.max_line_length:
-                    lines.append(" ".join(current_line))
-                    current_line = [word]
-                    current_length = word_length
-                else:
-                    current_line.append(word)
-                    current_length += word_length + 1  # +1 for space
+            test_line = " ".join(current_line + [word])
+            if len(test_line) > self.max_line_length and current_line:
+                # Start a new line
+                lines.append(" ".join(current_line))
+                current_line = [word]
             else:
                 current_line.append(word)
-                current_length = word_length
+        
+        # Add the last line
+        if current_line:
+            lines.append(" ".join(current_line))
+        
+        # If we have too many lines, we need to condense the content
+        if len(lines) > max_lines:
+            # Remove some of the extra context sentences
+            # This is better than truncating mid-sentence
+            sentences = self._split_into_sentences(citation)
+            
+            # Remove sentences from the middle (keep opening and closing)
+            while len(sentences) > 3:  # Keep at least opening, one body, closing
+                # Recombine and check line count
+                test_text = " ".join(sentences)
+                test_lines = self._simple_wrap(test_text, self.max_line_length)
                 
-        # Add final line
+                if len(test_lines) <= max_lines:
+                    break
+                    
+                # Remove a sentence from the middle
+                middle_index = len(sentences) // 2
+                sentences.pop(middle_index)
+            
+            # Rewrap the condensed text
+            condensed_text = " ".join(sentences)
+            lines = self._simple_wrap(condensed_text, self.max_line_length)
+        
+        return "\n".join(lines)
+    
+    def _simple_wrap(self, text: str, max_length: int) -> List[str]:
+        """Simple word wrapping without justification."""
+        words = text.split()
+        lines = []
+        current_line = []
+        
+        for word in words:
+            test_line = " ".join(current_line + [word])
+            if len(test_line) > max_length and current_line:
+                lines.append(" ".join(current_line))
+                current_line = [word]
+            else:
+                current_line.append(word)
+        
         if current_line:
             lines.append(" ".join(current_line))
             
-        # If we have too few lines, try to rebalance
-        if len(lines) < max_lines - 2:
-            lines = self._rebalance_lines(lines, max_lines)
-            
-        # If we have too many lines, we need to condense
-        if len(lines) > max_lines:
-            lines = self._condense_lines(lines, max_lines)
-            
-        return "\n".join(lines)
-        
-    def _rebalance_lines(self, lines: List[str], target_lines: int) -> List[str]:
-        """Rebalance lines to get closer to target line count."""
-        # Calculate target characters per line
-        total_chars = sum(len(line) for line in lines)
-        target_chars_per_line = total_chars // target_lines
-        
-        # Rebuild with shorter lines
-        all_words = " ".join(lines).split()
-        new_lines = []
-        current_line = []
-        current_length = 0
-        
-        for word in all_words:
-            word_length = len(word)
-            
-            space_count = len(current_line) - 1 if current_line else 0
-            if current_line and current_length + word_length + space_count + 1 > target_chars_per_line:
-                new_lines.append(" ".join(current_line))
-                current_line = [word]
-                current_length = word_length
-            else:
-                current_line.append(word)
-                current_length += word_length
-                
-        if current_line:
-            new_lines.append(" ".join(current_line))
-            
-        return new_lines
-        
-    def _condense_lines(self, lines: List[str], max_lines: int) -> List[str]:
-        """Condense citation to fit within line limits."""
-        # This is a fallback - we should rarely need this with proper generation
-        text = " ".join(lines)
-        
-        # Remove less critical phrases - DISABLED due to issues with decimal numbers
-        # These patterns were matching decimal points (like 28.6) as sentence endings
-        # causing text like "FREEDOM. Furthermore... 28.6 million" to become "FREEDOM..6 million"
-        # condensing_patterns = [
-        #     (r'\s+Additionally,[^.]+\.', '.'),  # Problem: matches decimal points
-        #     (r'\s+Furthermore,[^.]+\.', '.'),   # Problem: matches decimal points
-        #     (r',\s+which\s+[^,]+,', ','),      # This one might be OK
-        # ]
-        
-        # for pattern, replacement in condensing_patterns:
-        #     text = re.sub(pattern, replacement, text)
-            
-        # Re-split into lines WITHOUT calling _format_to_lines to avoid recursion
-        words = text.split()
-        new_lines = []
-        current_line = []
-        
-        for word in words:
-            if current_line:
-                test_line = " ".join(current_line + [word])
-                if len(test_line) > self.max_line_length:
-                    new_lines.append(" ".join(current_line))
-                    current_line = [word]
-                else:
-                    current_line.append(word)
-            else:
-                current_line.append(word)
-                
-        if current_line:
-            new_lines.append(" ".join(current_line))
-            
-        # If still too long, truncate
-        if len(new_lines) > max_lines:
-            new_lines = new_lines[:max_lines]
-            
-        return new_lines
+        return lines
         
     def _clean_for_narrative(self, text: str) -> str:
         """Clean text for use in narrative."""
@@ -690,120 +590,6 @@ class CitationGenerator:
         else:
             return 'he'  # Default for military citations when gender unknown
     
-    def _format_to_maximize_usage(self, citation: str, award_type: str) -> str:
-        """Format citation to maximize character usage per line."""
-        max_lines = self.LINE_LIMITS.get(award_type, 12)
-        target_chars_per_line = self.max_line_length - 5  # Aim for 90 chars minimum
-        
-        # First, split into sentences
-        sentences = self._split_into_sentences(citation)
-        
-        # Build lines with maximum character usage
-        lines = []
-        current_line = []
-        current_length = 0
-        sentence_index = 0
-        
-        while sentence_index < len(sentences) and len(lines) < max_lines - 1:  # Save last line for closing
-            sentence = sentences[sentence_index]
-            words = sentence.split()
-            word_index = 0
-            
-            while word_index < len(words):
-                word = words[word_index]
-                
-                # Calculate if adding this word keeps us under limit
-                if current_line:
-                    test_line = " ".join(current_line + [word])
-                    test_length = len(test_line)
-                else:
-                    test_line = word
-                    test_length = len(word)
-                
-                if test_length <= self.max_line_length:
-                    # Word fits, add it
-                    current_line.append(word)
-                    current_length = test_length
-                    word_index += 1
-                    
-                    # Aggressively try to add more words to get closer to max
-                    while word_index < len(words):
-                        next_word = words[word_index]
-                        test_with_next = " ".join(current_line + [next_word])
-                        if len(test_with_next) <= self.max_line_length:
-                            current_line.append(next_word)
-                            current_length = len(test_with_next)
-                            word_index += 1
-                        else:
-                            break
-                            
-                else:
-                    # Word doesn't fit
-                    if current_length < target_chars_per_line and len(lines) < max_lines - 2:
-                        # Line is too short, try to add filler words
-                        current_line = self._expand_line(current_line, self.max_line_length)
-                    
-                    # Save the line
-                    lines.append(" ".join(current_line))
-                    current_line = [word]
-                    current_length = len(word)
-                    word_index += 1
-            
-            sentence_index += 1
-        
-        # Add remaining content
-        if current_line:
-            # Expand the last line if it's too short
-            if len(" ".join(current_line)) < target_chars_per_line:
-                current_line = self._expand_line(current_line, self.max_line_length)
-            lines.append(" ".join(current_line))
-        
-        # Handle the closing sentence specially
-        closing_markers = ["dedication and devotion to duty", "traditions of the United States Coast Guard"]
-        
-        # Check if closing is already properly formatted in lines
-        closing_found = False
-        closing_line_start = -1
-        for i, line in enumerate(lines):
-            if any(marker in line for marker in closing_markers):
-                closing_found = True
-                closing_line_start = i
-                break
-        
-        # If closing found but incomplete (doesn't end with "Coast Guard"), complete it
-        if closing_found and closing_line_start >= 0:
-            # Check if the closing continues to the end properly
-            remaining_text = " ".join(lines[closing_line_start:])
-            if "United States Coast Guard" not in remaining_text:
-                # Find the full closing sentence
-                for sent in sentences:
-                    if any(marker in sent for marker in closing_markers):
-                        # Replace the partial closing with the full one
-                        lines = lines[:closing_line_start]
-                        
-                        # Format the full closing
-                        closing_words = sent.split()
-                        current_closing_line = []
-                        
-                        for word in closing_words:
-                            test_line = " ".join(current_closing_line + [word])
-                            if len(test_line) <= self.max_line_length:
-                                current_closing_line.append(word)
-                            else:
-                                if current_closing_line:
-                                    lines.append(" ".join(current_closing_line))
-                                current_closing_line = [word]
-                        
-                        if current_closing_line:
-                            lines.append(" ".join(current_closing_line))
-                        break
-        
-        # Final check: ensure we don't exceed max lines
-        if len(lines) > max_lines:
-            lines = lines[:max_lines]
-        
-        return "\n".join(lines)
-    
     def _split_into_sentences(self, text: str) -> List[str]:
         """Split text into sentences, preserving periods in numbers."""
         # Simple sentence splitter that preserves decimal numbers
@@ -825,178 +611,3 @@ class CitationGenerator:
             sentences.append(" ".join(current))
             
         return sentences
-    
-    def _expand_line(self, words: List[str], max_length: int) -> List[str]:
-        """Expand a line by adding descriptive words to fill space."""
-        expanded = words[:]
-        current_length = len(" ".join(expanded))
-        
-        # More comprehensive expansion words by context
-        expansions = {
-            'the': ['the exceptional', 'the remarkable', 'the outstanding', 'the extraordinary', 'the distinguished'],
-            'his': ['his exemplary', 'his distinguished', 'his exceptional', 'his remarkable', 'his outstanding'],
-            'her': ['her exemplary', 'her distinguished', 'her exceptional', 'her remarkable', 'her outstanding'],
-            'and': ['and notably', 'and significantly', 'and importantly', 'and particularly', 'and especially'],
-            'with': ['with remarkable', 'with exceptional', 'with outstanding', 'with extraordinary', 'with unparalleled'],
-            'through': ['through dedicated', 'through persistent', 'through tireless', 'through unwavering', 'through exceptional'],
-            'for': ['for critical', 'for essential', 'for vital', 'for significant', 'for important'],
-            'of': ['of significant', 'of critical', 'of exceptional', 'of considerable', 'of remarkable'],
-            'in': ['in crucial', 'in critical', 'in essential', 'in significant', 'in important'],
-            'to': ['to successfully', 'to effectively', 'to expertly', 'to efficiently', 'to skillfully'],
-            'a': ['a remarkable', 'an exceptional', 'a significant', 'a critical', 'an outstanding'],
-            'by': ['by expertly', 'by skillfully', 'by effectively', 'by successfully', 'by efficiently'],
-            'as': ['as well as', 'as demonstrated by', 'as evidenced by'],
-            'this': ['this remarkable', 'this exceptional', 'this significant', 'this critical'],
-            'that': ['that significantly', 'that remarkably', 'that notably'],
-            'which': ['which significantly', 'which remarkably', 'which effectively'],
-            'from': ['from throughout', 'from across', 'from within'],
-            'during': ['during this critical', 'during this significant', 'during the entire'],
-        }
-        
-        # Additional single-word expansions
-        single_expansions = {
-            'led': 'spearheaded',
-            'managed': 'orchestrated',
-            'helped': 'facilitated',
-            'made': 'accomplished',
-            'got': 'achieved',
-            'did': 'accomplished',
-            'saved': 'preserved',
-            'used': 'utilized',
-            'showed': 'demonstrated',
-            'gave': 'provided',
-            'took': 'assumed',
-            'put': 'positioned',
-            'set': 'established',
-            'kept': 'maintained',
-            'found': 'discovered',
-            'left': 'departed',
-            'felt': 'experienced',
-            'brought': 'delivered',
-            'began': 'initiated',
-            'started': 'commenced',
-            'ended': 'concluded',
-            'good': 'exceptional',
-            'great': 'outstanding',
-            'important': 'critical',
-            'big': 'significant',
-            'new': 'innovative',
-            'high': 'elevated',
-            'old': 'established',
-            'long': 'extended',
-            'large': 'substantial',
-            'small': 'focused',
-            'next': 'subsequent',
-            'early': 'initial',
-            'young': 'junior',
-            'few': 'select',
-            'many': 'numerous',
-            'much': 'substantial',
-            'most': 'predominant',
-            'other': 'additional',
-            'such': 'particularly',
-            'own': 'personal',
-            'same': 'identical',
-            'able': 'capable',
-            'basic': 'fundamental',
-            'clear': 'transparent',
-            'easy': 'straightforward',
-            'hard': 'challenging',
-            'major': 'significant',
-            'strong': 'robust',
-            'sure': 'certain',
-            'true': 'accurate',
-            'best': 'optimal',
-            'fast': 'expeditious',
-            'direct': 'straightforward',
-            'full': 'comprehensive',
-            'special': 'exceptional',
-            'wrong': 'incorrect',
-            'right': 'appropriate',
-            'real': 'genuine',
-            'free': 'unrestricted',
-            'huge': 'substantial',
-            'popular': 'well-regarded',
-            'recent': 'contemporary',
-            'similar': 'comparable',
-            'bad': 'substandard',
-            'whole': 'entire',
-        }
-        
-        # First pass: Try to expand articles and prepositions
-        changed = True
-        passes = 0
-        while changed and passes < 3 and current_length < max_length - 2:  # Get closer to max
-            changed = False
-            i = 0
-            while i < len(expanded) and current_length < max_length - 2:
-                word = expanded[i].lower()
-                base_word = word.rstrip('.,;:!?')
-                punctuation = word[len(base_word):]
-                
-                if base_word in expansions:
-                    # Try all expansions, pick the longest that fits
-                    best_expansion = None
-                    best_length = current_length
-                    
-                    for expansion in sorted(expansions[base_word], key=len, reverse=True):
-                        test_expanded = expanded[:]
-                        test_expanded[i] = expansion + punctuation
-                        test_length = len(" ".join(test_expanded))
-                        
-                        if test_length <= max_length and test_length > best_length:
-                            best_expansion = expansion + punctuation
-                            best_length = test_length
-                    
-                    if best_expansion:
-                        expanded[i] = best_expansion
-                        current_length = best_length
-                        changed = True
-                
-                i += 1
-            passes += 1
-        
-        # Second pass: Try single word replacements if still space
-        if current_length < max_length - 5:
-            i = 0
-            while i < len(expanded) and current_length < max_length - 2:
-                word = expanded[i].lower()
-                base_word = word.rstrip('.,;:!?')
-                punctuation = word[len(base_word):]
-                
-                if base_word in single_expansions:
-                    replacement = single_expansions[base_word] + punctuation
-                    test_expanded = expanded[:]
-                    test_expanded[i] = replacement
-                    test_length = len(" ".join(test_expanded))
-                    
-                    if test_length <= max_length:
-                        expanded[i] = replacement
-                        current_length = test_length
-                
-                i += 1
-        
-        # Third pass: Add descriptive adjectives to nouns if still space
-        if current_length < max_length - 8:
-            noun_adjectives = ['outstanding', 'exceptional', 'remarkable', 'significant', 'critical', 'vital']
-            i = 0
-            while i < len(expanded) - 1 and current_length < max_length - 2:
-                word = expanded[i].lower()
-                next_word = expanded[i + 1].lower() if i + 1 < len(expanded) else ''
-                
-                # Simple heuristic: if current word is 'the' or 'a' and next word doesn't start with adjective
-                if word in ['the', 'a', 'an'] and next_word and not any(next_word.startswith(adj) for adj in ['exceptional', 'remarkable', 'outstanding', 'significant']):
-                    # Try to add an adjective
-                    for adj in noun_adjectives:
-                        test_expanded = expanded[:]
-                        test_expanded.insert(i + 1, adj)
-                        test_length = len(" ".join(test_expanded))
-                        
-                        if test_length <= max_length:
-                            expanded.insert(i + 1, adj)
-                            current_length = test_length
-                            break
-                
-                i += 1
-        
-        return expanded

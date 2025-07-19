@@ -162,7 +162,7 @@ def _add_citation_page(doc: Document, award_type: str, awardee_info: Dict,
     
     # Add the citation text
     citation_para = doc.add_paragraph()
-    citation_para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    citation_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
     
     # Format the citation with proper font
     run = citation_para.add_run(citation_text)
