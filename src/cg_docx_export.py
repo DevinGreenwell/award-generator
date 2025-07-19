@@ -88,6 +88,71 @@ def _add_citation_page(doc: Document, award_type: str, awardee_info: Dict,
                        citation_text: Optional[str], export_data: Dict):
     """Add the citation page with proper formatting."""
     
+    # Add header with award type
+    header = doc.add_paragraph()
+    header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # Format the header based on award type
+    header_text = f"CITATION TO ACCOMPANY THE AWARD OF"
+    header_run = header.add_run(header_text)
+    header_run.font.name = 'Times New Roman'
+    header_run.font.size = Pt(12)
+    
+    # Add award name line
+    award_line = doc.add_paragraph()
+    award_line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # Format award name (add "THE" prefix for most awards)
+    if award_type.startswith("Coast Guard"):
+        award_name = f"THE {award_type.upper()}"
+    elif award_type in ["Legion of Merit", "Bronze Star Medal"]:
+        award_name = f"THE {award_type.upper()}"
+    else:
+        award_name = award_type.upper()
+    
+    award_run = award_line.add_run(award_name)
+    award_run.font.name = 'Times New Roman'
+    award_run.font.size = Pt(12)
+    award_run.font.bold = True
+    
+    # Add "TO" line
+    to_line = doc.add_paragraph()
+    to_line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    to_run = to_line.add_run("TO")
+    to_run.font.name = 'Times New Roman'
+    to_run.font.size = Pt(12)
+    
+    # Add blank line
+    doc.add_paragraph()
+    
+    # Add member name and rank
+    name_line = doc.add_paragraph()
+    name_line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    name = awardee_info.get('name', '').upper()
+    rank = awardee_info.get('rank', '').upper()
+    
+    if rank:
+        name_text = f"{name}\n{rank}"
+    else:
+        name_text = name
+        
+    name_run = name_line.add_run(name_text)
+    name_run.font.name = 'Times New Roman'
+    name_run.font.size = Pt(12)
+    name_run.font.bold = True
+    
+    # Add "UNITED STATES COAST GUARD" line
+    uscg_line = doc.add_paragraph()
+    uscg_line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    uscg_run = uscg_line.add_run("UNITED STATES COAST GUARD")
+    uscg_run.font.name = 'Times New Roman'
+    uscg_run.font.size = Pt(12)
+    uscg_run.font.bold = True
+    
+    # Add blank line before citation
+    doc.add_paragraph()
+    
     # If no citation text provided, generate one
     if not citation_text:
         from citation_formatter import CitationFormatter
@@ -104,6 +169,16 @@ def _add_citation_page(doc: Document, award_type: str, awardee_info: Dict,
     run.font.name = 'Times New Roman'
     run.font.size = Pt(11)
     run.font.bold = True
+    
+    # Add Operational Distinguishing Device line if applicable
+    if _requires_operational_device(award_type):
+        doc.add_paragraph()  # Blank line
+        device_para = doc.add_paragraph()
+        device_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        device_run = device_para.add_run("The Operational Distinguishing Device is authorized.")
+        device_run.font.name = 'Times New Roman'
+        device_run.font.size = Pt(11)
+        device_run.font.bold = True
     
     # Note: In actual implementation, the seal would be added as an image
     # positioned in the lower left corner
@@ -212,6 +287,18 @@ def _requires_summary_of_action(award_type: str) -> bool:
         'Legion of Merit', 
         'Meritorious Service Medal',
         'Coast Guard Unit Commendation'
+    ]
+
+
+def _requires_operational_device(award_type: str) -> bool:
+    """Check if the award type may include the Operational Distinguishing Device."""
+    # Based on the examples, these awards sometimes include the device
+    return award_type in [
+        'Coast Guard Commendation Medal',
+        'Coast Guard Achievement Medal',
+        'Coast Guard Unit Commendation',
+        'Coast Guard Meritorious Unit Commendation',
+        'Coast Guard Meritorious Team Commendation'
     ]
 
 

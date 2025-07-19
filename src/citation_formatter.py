@@ -10,24 +10,32 @@ from typing import Dict, List, Optional, Tuple
 class CitationFormatter:
     """Formats award citations according to Coast Guard standards."""
     
-    # Standard opening phrases for each award type
+    # Standard opening phrases for each award type (based on official examples)
     OPENING_PHRASES = {
-        "Distinguished Service Medal": "For exceptionally meritorious service to the Government of the United States in a duty of great responsibility",
-        "Legion of Merit": "For exceptionally meritorious conduct in the performance of outstanding services",
-        "Meritorious Service Medal": "For outstanding meritorious service",
-        "Coast Guard Commendation Medal": "For superior performance of duty",
-        "Coast Guard Achievement Medal": "For professional achievement",
+        "Distinguished Service Medal": "is cited for exceptionally meritorious service to the Government of the United States in a position of great responsibility",
+        "Legion of Merit": "is cited for outstanding meritorious service",
+        "Distinguished Flying Cross": "is cited for extraordinary heroism while participating in aerial flight",
+        "Coast Guard Medal": "is cited for extraordinary heroism",
+        "Bronze Star Medal": "For meritorious achievement in connection with combat operations",
+        "Meritorious Service Medal": "is cited for meritorious service in the performance of duty",
+        "Air Medal": "is cited for meritorious achievement in aerial flight",
+        "Coast Guard Commendation Medal": "is cited for outstanding achievement",
+        "Coast Guard Achievement Medal": "is cited for superior performance of duty",
         "Coast Guard Letter of Commendation": "For outstanding performance of duty"
     }
     
-    # Standard closing phrases for each award type
+    # Standard closing phrases for each award type (based on official examples)
     CLOSING_PHRASES = {
-        "Distinguished Service Medal": "{name}'s distinctive accomplishments, unrelenting perseverance, and steadfast devotion to duty reflect great credit upon {pronoun} and are in keeping with the highest traditions of the United States Coast Guard.",
-        "Legion of Merit": "{name}'s initiative, perseverance, and devotion to duty reflect great credit upon {pronoun} and are in keeping with the highest traditions of the United States Coast Guard.",
-        "Meritorious Service Medal": "{name}'s dedication, judgment, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
-        "Coast Guard Commendation Medal": "{name}'s dedication, professional knowledge, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
-        "Coast Guard Achievement Medal": "{name}'s dedication, perseverance, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
-        "Coast Guard Letter of Commendation": "{name}'s initiative, perseverance, and devotion to duty reflect credit upon {pronoun} and the United States Coast Guard."
+        "Distinguished Service Medal": "{name}'s leadership, dedication, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Legion of Merit": "{name}'s ability, diligence, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Distinguished Flying Cross": "{name}'s courage, judgment, and devotion to duty in the face of hazardous conditions are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Coast Guard Medal": "{name}'s courage and devotion to duty are in keeping with the highest traditions of the United States Coast Guard.",
+        "Bronze Star Medal": "{name}'s courage and devotion to duty reflect great credit upon {pronoun} and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Meritorious Service Medal": "{name}'s dedication and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Air Medal": "{name}'s courage, judgment, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Coast Guard Commendation Medal": "{name}'s dedication, judgment, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Coast Guard Achievement Medal": "{name}'s diligence, perseverance, and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.",
+        "Coast Guard Letter of Commendation": "By your meritorious service you have upheld the highest traditions of the United States Coast Guard."
     }
     
     # Line limits for each award type
@@ -61,12 +69,9 @@ class CitationFormatter:
         unit = awardee_info.get('unit', '')
         position = awardee_info.get('position', '')
         
-        # Format name with rank
-        if rank:
-            full_name = f"{rank} {name}".upper()
-        else:
-            full_name = name.upper()
-            
+        # Get last name for citation use
+        last_name = name.split()[-1] if name else 'Member'
+        
         # Determine pronoun
         pronoun = self._determine_pronoun(name)
         
@@ -75,85 +80,137 @@ class CitationFormatter:
         if not time_period or time_period == "Not specified":
             time_period = "[dates of service]"
             
-        # Build citation components
-        opening = self._format_opening(award_type, position, unit, time_period)
-        body = self._format_body(full_name, achievement_data)
-        closing = self._format_closing(award_type, full_name, pronoun)
+        # Build citation as single paragraph
+        # Start with member name and opening phrase
+        opening_template = self.OPENING_PHRASES.get(award_type, "is cited for outstanding achievement")
         
-        # Combine and format to line limits
-        full_citation = f"{opening} {body} {closing}"
+        if rank:
+            # Capitalize rank properly
+            rank_parts = rank.split()
+            cap_rank_parts = []
+            for part in rank_parts:
+                if part.lower() in ['first', 'second', 'third', 'class']:
+                    cap_rank_parts.append(part.capitalize())
+                else:
+                    cap_rank_parts.append(part.title())
+            formatted_rank = ' '.join(cap_rank_parts)
+            citation_parts = [f"{formatted_rank} {last_name.upper()}"]
+        else:
+            citation_parts = [f"Petty Officer {last_name.upper()}"]
+            
+        citation_parts.append(opening_template)
         
-        # Apply line limits and formatting
+        # Add duty assignment
+        if position and unit:
+            citation_parts.append(f"while serving as {position}, {unit},")
+        elif unit:
+            citation_parts.append(f"while serving at {unit},")
+        elif position:
+            citation_parts.append(f"while serving as {position},")
+            
+        # Add time period
+        citation_parts.append(f"from {time_period}.")
+        
+        # Add achievement narrative
+        narrative = self._build_achievement_narrative(achievement_data, pronoun)
+        citation_parts.append(narrative)
+        
+        # Add closing
+        closing_template = self.CLOSING_PHRASES.get(award_type, 
+            "{name}'s dedication and devotion to duty are most heartily commended and are in keeping with the highest traditions of the United States Coast Guard.")
+        
+        # Format closing with proper name reference
+        if rank:
+            # Capitalize rank properly
+            rank_parts = rank.split()
+            cap_rank_parts = []
+            for part in rank_parts:
+                if part.lower() in ['first', 'second', 'third', 'class']:
+                    cap_rank_parts.append(part.capitalize())
+                else:
+                    cap_rank_parts.append(part.title())
+            formatted_rank = ' '.join(cap_rank_parts)
+            name_ref = f"{formatted_rank} {last_name.upper()}"
+        else:
+            name_ref = f"Petty Officer {last_name.upper()}"
+            
+        closing = closing_template.format(name=name_ref, pronoun=pronoun)
+        citation_parts.append(closing)
+        
+        # Join all parts into single paragraph
+        full_citation = " ".join(citation_parts)
+        
+        # Apply line formatting for landscape orientation
         formatted_citation = self._apply_line_formatting(full_citation, award_type)
         
         return formatted_citation
     
-    def _format_opening(self, award_type: str, position: str, unit: str, time_period: str) -> str:
-        """Format the opening phrase of the citation."""
-        opening = self.OPENING_PHRASES.get(award_type, "For outstanding performance of duty")
-        
-        # Add duty assignment if available
-        if position and unit:
-            opening += f" while serving as {position}, {unit},"
-        elif unit:
-            opening += f" while serving at {unit},"
-        elif position:
-            opening += f" while serving as {position},"
-            
-        # Add time period
-        opening += f" from {time_period}."
-        
-        return opening
-    
-    def _format_body(self, full_name: str, achievement_data: Dict) -> str:
-        """Format the body of the citation with achievements."""
-        body_parts = []
-        
-        # Start with member name
-        body_parts.append(f"{full_name} distinguished {self._get_reflexive_pronoun(full_name)} by")
-        
-        # Get key achievements and impacts
+    def _build_achievement_narrative(self, achievement_data: Dict, pronoun: str) -> str:
+        """Build the achievement narrative in Coast Guard style."""
+        # Get achievements and impacts
         achievements = achievement_data.get('achievements', [])
         impacts = achievement_data.get('impacts', [])
         leadership = achievement_data.get('leadership_details', [])
+        innovations = achievement_data.get('innovation_details', [])
+        challenges = achievement_data.get('challenges', [])
         
-        # Combine and prioritize content
-        key_accomplishments = []
+        # Build narrative components
+        narrative_parts = []
         
-        # Add most significant achievements
+        # Focus on demonstrating exceptional performance
+        if leadership and any('led' in l.lower() or 'supervised' in l.lower() for l in leadership):
+            # Leadership-focused opening
+            leadership_item = next(l for l in leadership if 'led' in l.lower() or 'supervised' in l.lower())
+            narrative_parts.append(f"Demonstrating exceptional leadership, {pronoun} {self._clean_achievement(leadership_item)}.")
+            
+        # Add key achievements with impact
+        key_achievements = []
+        
+        # Prioritize quantifiable achievements
         for achievement in achievements[:3]:
-            key_accomplishments.append(self._clean_text(achievement))
-            
-        # Add quantifiable impacts
-        for impact in impacts[:2]:
-            if any(char.isdigit() for char in impact):  # Prioritize quantifiable impacts
-                key_accomplishments.append(self._clean_text(impact))
+            if any(char.isdigit() for char in achievement):
+                key_achievements.append(self._clean_achievement(achievement))
+        
+        # Add other significant achievements
+        for achievement in achievements:
+            if achievement not in key_achievements and len(key_achievements) < 3:
+                key_achievements.append(self._clean_achievement(achievement))
                 
-        # Add leadership if significant
-        for lead in leadership[:1]:
-            if 'led' in lead.lower() or 'supervised' in lead.lower():
-                key_accomplishments.append(self._clean_text(lead))
-        
-        # Format accomplishments into narrative
-        if key_accomplishments:
-            # Clean up accomplishments - remove trailing periods
-            cleaned_accomplishments = []
-            for acc in key_accomplishments:
-                acc = acc.rstrip('.')
-                cleaned_accomplishments.append(acc)
-            
-            # Use conjunctions to create flowing narrative
-            if len(cleaned_accomplishments) == 1:
-                body_parts.append(cleaned_accomplishments[0])
-            elif len(cleaned_accomplishments) == 2:
-                body_parts.append(f"{cleaned_accomplishments[0]} and {cleaned_accomplishments[1]}")
+        # Format achievements into flowing narrative
+        if key_achievements:
+            if len(key_achievements) == 1:
+                narrative_parts.append(f"His efforts {key_achievements[0]}.")
+            elif len(key_achievements) == 2:
+                narrative_parts.append(f"His exceptional performance {key_achievements[0]} and {key_achievements[1]}.")
             else:
-                # Join with commas and 'and' for the last item
-                accomplishment_text = ", ".join(cleaned_accomplishments[:-1])
-                accomplishment_text += f", and {cleaned_accomplishments[-1]}"
-                body_parts.append(accomplishment_text)
+                # Multiple achievements
+                narrative_parts.append(f"Through tireless dedication, {pronoun} {key_achievements[0]}, {key_achievements[1]}, and {key_achievements[2]}.")
         
-        return " ".join(body_parts)
+        # Add significant impacts
+        significant_impacts = []
+        for impact in impacts[:2]:
+            if '$' in impact or '%' in impact or any(word in impact.lower() for word in ['saved', 'increased', 'reduced', 'improved']):
+                significant_impacts.append(self._clean_achievement(impact))
+                
+        if significant_impacts:
+            impact_text = " and ".join(significant_impacts)
+            narrative_parts.append(f"These efforts directly resulted in {impact_text}.")
+            
+        # Add innovation if present
+        if innovations:
+            innovation = self._clean_achievement(innovations[0])
+            narrative_parts.append(f"His innovative approach {innovation}.")
+            
+        # Join narrative parts
+        return " ".join(narrative_parts)
+    
+    def _clean_achievement(self, text: str) -> str:
+        """Clean an achievement text for use in citation."""
+        # Remove leading/trailing whitespace and periods
+        text = text.strip().rstrip('.')
+        
+        # Keep the text mostly as-is, just ensure no double periods
+        return text
     
     def _format_closing(self, award_type: str, full_name: str, pronoun: str) -> str:
         """Format the closing phrase of the citation."""
@@ -290,12 +347,13 @@ class CitationFormatter:
     def _determine_pronoun(self, name: str) -> str:
         """Determine appropriate pronoun (simplified - in production would need better logic)."""
         # This is a simplified version - in production, you'd want proper pronoun handling
-        return "himself or herself"
+        # For now, using "he" as default based on examples, but should be configurable
+        return "he"
     
     def _get_reflexive_pronoun(self, name: str) -> str:
         """Get reflexive pronoun form."""
         # Simplified - in production would need proper logic
-        return "himself or herself"
+        return "himself"
     
     def validate_citation(self, citation: str, award_type: str) -> Tuple[bool, List[str]]:
         """
@@ -317,9 +375,8 @@ class CitationFormatter:
             if len(line) > self.max_line_length:
                 issues.append(f"Line {i+1} exceeds {self.max_line_length} characters")
                 
-        # Check for required opening phrase
-        opening_phrase = self.OPENING_PHRASES.get(award_type, "")
-        if opening_phrase and not citation.lower().startswith(opening_phrase[:20].lower()):
+        # Check for required opening phrase (just check for "is cited for" pattern)
+        if "is cited for" not in citation.lower()[:100]:
             issues.append("Missing standard opening phrase")
             
         # Check for closing phrase (case-insensitive)
