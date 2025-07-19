@@ -247,6 +247,9 @@ CRITICAL EXTRACTION INSTRUCTIONS:
 - Include ALL quantifiable data: exact numbers, percentages, dollar amounts, timeframes, personnel counts
 - Capture leadership at ANY level: formal supervision, informal leadership, project management, team coordination
 - Note ANY innovation, process improvement, creative solution, or new approach
+- PRIORITIZE achievements with quantifiable impacts and measurable results
+- For each achievement, identify the ACTION (what was done), IMPACT (what changed), and RESULT (the measurable outcome)
+- Link achievements to their specific impacts whenever possible
 - Include ALL challenges: resource constraints, time pressure, difficult conditions, complex problems
 - Look for scope indicators: individual/team/unit/sector/district/area/coast guard-wide/national/international
 - Identify valor: life-saving, rescue operations, dangerous conditions, personal risk

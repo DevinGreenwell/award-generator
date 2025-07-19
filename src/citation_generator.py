@@ -71,18 +71,18 @@ class CitationGenerator:
         "Coast Guard Letter of Commendation": "By your meritorious service you have upheld the highest traditions of the United States Coast Guard."
     }
     
-    # Line limits for each award
-    LINE_LIMITS = {
-        "Distinguished Service Medal": 16,
-        "Legion of Merit": 16,
-        "Meritorious Service Medal": 12,
-        "Coast Guard Commendation Medal": 12,
-        "Coast Guard Achievement Medal": 12,
-        "Coast Guard Letter of Commendation": 12,
-        "Air Medal": 12,
-        "Distinguished Flying Cross": 14,
-        "Coast Guard Medal": 14,
-        "Bronze Star Medal": 14
+    # Character limits for each award (based on line limits x 95 chars per line)
+    CHARACTER_LIMITS = {
+        "Distinguished Service Medal": 1520,  # 16 lines x 95 chars
+        "Legion of Merit": 1520,              # 16 lines x 95 chars
+        "Meritorious Service Medal": 1140,   # 12 lines x 95 chars
+        "Coast Guard Commendation Medal": 1140,  # 12 lines x 95 chars
+        "Coast Guard Achievement Medal": 1140,    # 12 lines x 95 chars
+        "Coast Guard Letter of Commendation": 1140,  # 12 lines x 95 chars
+        "Air Medal": 1140,                    # 12 lines x 95 chars
+        "Distinguished Flying Cross": 1330,   # 14 lines x 95 chars
+        "Coast Guard Medal": 1330,            # 14 lines x 95 chars
+        "Bronze Star Medal": 1330            # 14 lines x 95 chars
     }
     
     def __init__(self):
@@ -90,7 +90,7 @@ class CitationGenerator:
         
     def generate_citation(self, award_type: str, awardee_info: Dict, achievement_data: Dict) -> str:
         """
-        Generate a compelling, narrative citation that maximizes line count.
+        Generate a compelling, narrative citation that maximizes character usage.
         
         Args:
             award_type: Type of award
@@ -115,6 +115,9 @@ class CitationGenerator:
         # Determine pronoun based on name
         pronoun = self._determine_pronoun(name)
         
+        # Prioritize achievements by impact and quantifiable results
+        prioritized_achievements = self._prioritize_achievements(achievement_data)
+        
         # Build the citation narrative
         narrative_parts = []
         
@@ -122,16 +125,8 @@ class CitationGenerator:
         opening = self._build_opening(award_type, rank, last_name, position, unit, time_period)
         narrative_parts.append(opening)
         
-        # Build narrative body focused on quality over quantity
-        body_sentences = self._build_narrative_body(achievement_data, rank, last_name, pronoun)
-        
-        # Add 1-2 additional context sentences if needed for completeness
-        extra_sentences = self._generate_additional_context(achievement_data, rank, last_name, pronoun)
-        
-        # Add a few extra sentences for context, but don't overdo it
-        if len(body_sentences) < 6:  # Reasonable body content
-            body_sentences.extend(extra_sentences[:2])  # Just add 1-2 more
-        
+        # Build narrative body with action-impact-result structure
+        body_sentences = self._build_enhanced_narrative_body(prioritized_achievements, rank, last_name, pronoun)
         narrative_parts.extend(body_sentences)
         
         # Add closing
@@ -141,10 +136,71 @@ class CitationGenerator:
         # Combine into full narrative
         full_citation = " ".join(narrative_parts)
         
-        # Format with left alignment - no forced justification
-        formatted_citation = self._format_left_aligned(full_citation, award_type)
+        # Format based on character count instead of lines
+        formatted_citation = self._format_by_characters(full_citation, award_type)
         
         return formatted_citation
+    
+    def _prioritize_achievements(self, achievement_data: Dict) -> Dict:
+        """Prioritize achievements based on quantifiable impact and results."""
+        # Create a scoring system for achievements
+        scored_achievements = []
+        
+        achievements = achievement_data.get('achievements', [])
+        impacts = achievement_data.get('impacts', [])
+        quantifiable_metrics = achievement_data.get('quantifiable_metrics', [])
+        
+        # Create achievement-impact pairs
+        for achievement in achievements:
+            score = 0
+            related_impacts = []
+            
+            # Check for quantifiable elements in the achievement itself
+            if any(char.isdigit() for char in achievement):
+                score += 3
+            
+            # Find related impacts
+            achievement_lower = achievement.lower()
+            for impact in impacts:
+                impact_lower = impact.lower()
+                # Check for related keywords
+                matching_words = sum(1 for word in achievement_lower.split() 
+                                   if len(word) > 4 and word in impact_lower)
+                if matching_words > 0:
+                    related_impacts.append(impact)
+                    # Higher score for quantifiable impacts
+                    if any(char in impact for char in ['$', '%']) or any(char.isdigit() for char in impact):
+                        score += 5
+                    else:
+                        score += 2
+            
+            # Check quantifiable metrics
+            for metric in quantifiable_metrics:
+                metric_lower = metric.lower()
+                if any(word in metric_lower for word in achievement_lower.split() if len(word) > 4):
+                    related_impacts.append(metric)
+                    score += 4
+            
+            # Additional scoring factors
+            if any(word in achievement_lower for word in ['saved', 'rescued', 'prevented']):
+                score += 4  # Life-saving actions
+            if any(word in achievement_lower for word in ['led', 'managed', 'supervised', 'directed']):
+                score += 2  # Leadership
+            if any(word in achievement_lower for word in ['developed', 'created', 'designed', 'implemented']):
+                score += 2  # Innovation
+            
+            scored_achievements.append({
+                'achievement': achievement,
+                'impacts': related_impacts,
+                'score': score
+            })
+        
+        # Sort by score (highest first)
+        scored_achievements.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Return enhanced achievement data
+        achievement_data['prioritized_achievements'] = scored_achievements
+        return achievement_data
         
     def _build_opening(self, award_type: str, rank: str, last_name: str, 
                       position: str, unit: str, time_period: str) -> str:
@@ -173,8 +229,185 @@ class CitationGenerator:
         
         return " ".join(parts)
         
+    def _build_enhanced_narrative_body(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
+        """Build narrative body with action-impact-result structure for each achievement."""
+        sentences = []
+        
+        # Get prioritized achievements
+        prioritized = achievement_data.get('prioritized_achievements', [])
+        if not prioritized:
+            # Fallback to original method if prioritization failed
+            return self._build_narrative_body(achievement_data, rank, last_name, pronoun)
+        
+        # Extract other relevant data
+        leadership = achievement_data.get('leadership_details', [])
+        innovations = achievement_data.get('innovation_details', [])
+        challenges = achievement_data.get('challenges', [])
+        
+        # Process top achievements with their impacts
+        max_achievements = 4  # Focus on top 4 to ensure quality over quantity
+        for i, item in enumerate(prioritized[:max_achievements]):
+            achievement = item['achievement']
+            impacts = item['impacts']
+            
+            # Build action-impact-result sentence
+            if i == 0:  # First achievement gets special treatment
+                sentence = self._build_primary_achievement_sentence(achievement, impacts, pronoun)
+            else:
+                # Use transitions for subsequent achievements
+                transition = random.choice(self.TRANSITIONS['addition'])
+                sentence = self._build_achievement_with_impact(achievement, impacts, pronoun, transition)
+            
+            if sentence:
+                sentences.append(sentence)
+        
+        # Add challenge narrative if significant
+        if challenges and len(sentences) < 6:
+            challenge_sentence = self._build_challenge_sentence(challenges, rank, last_name, pronoun)
+            if challenge_sentence:
+                sentences.append(challenge_sentence)
+        
+        # Add overall impact summary
+        all_impacts = []
+        for item in prioritized:
+            all_impacts.extend(item['impacts'])
+        
+        if all_impacts and len(sentences) < 8:
+            impact_summary = self._build_comprehensive_impact_summary(all_impacts, pronoun)
+            if impact_summary:
+                sentences.append(impact_summary)
+            
+        return sentences
+    
+    def _build_primary_achievement_sentence(self, achievement: str, impacts: List[str], pronoun: str) -> str:
+        """Build the primary achievement sentence with full action-impact-result structure."""
+        achievement_text = self._clean_for_narrative(achievement)
+        
+        # Determine the type of achievement
+        if any(word in achievement_text.lower() for word in ['led', 'managed', 'supervised', 'directed']):
+            adj = random.choice(self.ADJECTIVES['leadership'])
+            intro = f"Demonstrating {adj} leadership and vision"
+        elif any(word in achievement_text.lower() for word in ['developed', 'created', 'designed']):
+            adj = random.choice(self.ADJECTIVES['innovation'])
+            intro = f"Through {adj} innovation"
+        else:
+            adj = random.choice(self.ADJECTIVES['skill'])
+            intro = f"With {adj} expertise"
+        
+        # Build the sentence with impact
+        if impacts:
+            # Choose the most significant impact
+            impact = self._select_best_impact(impacts)
+            impact_text = self._clean_for_narrative(impact)
+            
+            # Create flowing sentence
+            if 'resulted in' in impact_text or 'led to' in impact_text:
+                return f"{intro}, {pronoun} {achievement_text}, which {impact_text}."
+            else:
+                return f"{intro}, {pronoun} {achievement_text}, directly resulting in {impact_text}."
+        else:
+            return f"{intro}, {pronoun} {achievement_text}."
+    
+    def _build_achievement_with_impact(self, achievement: str, impacts: List[str], pronoun: str, transition: str) -> str:
+        """Build an achievement sentence that includes its impact and result."""
+        achievement_text = self._clean_for_narrative(achievement)
+        pronoun_possessive = 'Her' if pronoun == 'she' else 'His'
+        
+        if impacts:
+            impact = self._select_best_impact(impacts)
+            impact_text = self._clean_for_narrative(impact)
+            
+            # Vary the sentence structure
+            structures = [
+                f"{transition}, {pronoun} {achievement_text}, yielding {impact_text}.",
+                f"{pronoun_possessive} efforts to {achievement_text} resulted in {impact_text}.",
+                f"{transition}, through {achievement_text}, {pronoun} achieved {impact_text}."
+            ]
+            return random.choice(structures)
+        else:
+            return f"{transition}, {pronoun} {achievement_text}."
+    
+    def _select_best_impact(self, impacts: List[str]) -> str:
+        """Select the most significant impact from a list."""
+        # Prioritize quantifiable impacts
+        for impact in impacts:
+            if any(char in impact for char in ['$', '%']) or any(char.isdigit() for char in impact):
+                return impact
+        
+        # Then look for key result words
+        for impact in impacts:
+            if any(word in impact.lower() for word in ['saved', 'increased', 'reduced', 'improved', 'enhanced']):
+                return impact
+        
+        # Return first impact as fallback
+        return impacts[0] if impacts else "significant operational improvements"
+    
+    def _build_comprehensive_impact_summary(self, impacts: List[str], pronoun: str) -> str:
+        """Build a comprehensive summary of all impacts."""
+        # Filter for unique, significant impacts
+        unique_impacts = []
+        seen = set()
+        
+        for impact in impacts:
+            # Simple deduplication based on first few words
+            key = ' '.join(impact.lower().split()[:3])
+            if key not in seen:
+                seen.add(key)
+                unique_impacts.append(impact)
+        
+        # Select top 2-3 impacts
+        top_impacts = []
+        for impact in unique_impacts[:3]:
+            if any(char in impact for char in ['$', '%']) or any(char.isdigit() for char in impact):
+                top_impacts.append(self._clean_for_narrative(impact))
+        
+        if len(top_impacts) >= 2:
+            pronoun_possessive = 'Her' if pronoun == 'she' else 'His'
+            return f"{pronoun_possessive} comprehensive efforts culminated in {top_impacts[0]}, {top_impacts[1]}, and enhanced operational readiness throughout the command."
+        elif top_impacts:
+            return f"These initiatives directly resulted in {top_impacts[0]} and significantly enhanced mission effectiveness."
+        else:
+            return None
+    
+    def _format_by_characters(self, citation: str, award_type: str) -> str:
+        """Format citation based on character count instead of line breaks."""
+        max_chars = self.CHARACTER_LIMITS.get(award_type, 1140)
+        
+        # If citation fits within character limit, return as is
+        if len(citation) <= max_chars:
+            return citation
+        
+        # If too long, we need to trim intelligently
+        sentences = self._split_into_sentences(citation)
+        
+        # Always keep opening and closing
+        if len(sentences) < 3:
+            # If we can't split properly, truncate at word boundary
+            if len(citation) > max_chars:
+                words = citation[:max_chars].split()
+                return ' '.join(words[:-1]) + '...'
+            return citation
+        
+        opening = sentences[0]
+        closing = sentences[-1]
+        body_sentences = sentences[1:-1]
+        
+        # Build citation keeping within character limit
+        current_citation = opening
+        
+        for sentence in body_sentences:
+            test_citation = current_citation + " " + sentence
+            if len(test_citation + " " + closing) <= max_chars:
+                current_citation = test_citation
+            else:
+                break
+        
+        current_citation += " " + closing
+        
+        return current_citation
+        
     def _build_narrative_body(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
-        """Build the narrative body with rich, descriptive sentences."""
+        """Fallback to original narrative body builder."""
         sentences = []
         
         # Extract data
@@ -215,11 +448,6 @@ class CitationGenerator:
         impact_sentence = self._build_impact_summary(impacts, achievements, pronoun)
         if impact_sentence:
             sentences.append(impact_sentence)
-            
-        # Add collaboration/recognition if space allows
-        if len(sentences) < 8:  # Leave room for more detail
-            extra_sentences = self._build_additional_details(achievement_data, rank, last_name, pronoun)
-            sentences.extend(extra_sentences[:2])  # Add up to 2 more sentences
             
         return sentences
         
@@ -398,63 +626,6 @@ class CitationGenerator:
             pronoun_possessive = 'Her' if pronoun == 'she' else 'His'
             return f"{pronoun_possessive} contributions yielded exceptional results, including {impact1} and {impact2}."
             
-    def _build_additional_details(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
-        """Build additional detail sentences to maximize line count."""
-        sentences = []
-        
-        # Add scope of impact
-        scope = achievement_data.get('scope', '')
-        if scope and scope != 'Not specified':
-            adj = random.choice(self.ADJECTIVES['impact'])
-            pronoun_possessive = 'her' if pronoun == 'she' else 'his'
-            sentences.append(f"The {adj} impact of {pronoun_possessive} efforts extended throughout {scope}.")
-            
-        # Add collaboration details
-        if 'joint' in str(achievement_data).lower() or 'inter-agency' in str(achievement_data).lower():
-            pronoun_possessive = 'Her' if pronoun == 'she' else 'His'
-            sentences.append(f"{pronoun_possessive} collaborative approach fostered unprecedented inter-agency cooperation and operational synergy.")
-            
-        # Add recognition
-        if 'award' in str(achievement_data).lower() or 'recognized' in str(achievement_data).lower():
-            pronoun_possessive = 'Her' if pronoun == 'she' else 'His'
-            sentences.append(f"{pronoun_possessive} exceptional performance earned widespread recognition from senior leadership.")
-            
-        return sentences
-        
-    def _generate_additional_context(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
-        """Generate focused additional context sentences."""
-        additional = []
-        pronoun_possessive = 'her' if pronoun == 'she' else 'his'
-        pronoun_poss_cap = 'Her' if pronoun == 'she' else 'His'
-        
-        # Pick the most relevant context based on achievement data
-        
-        # Quantitative impact summary (if significant numbers present)
-        all_numbers = []
-        for field in ['achievements', 'impacts', 'quantifiable_metrics']:
-            for item in achievement_data.get(field, []):
-                numbers = re.findall(r'\$?[\d,]+\.?\d*\s*(?:million|thousand|percent|%)?', str(item))
-                all_numbers.extend(numbers)
-        
-        if len(all_numbers) >= 2:
-            additional.append(f"These quantifiable results demonstrate {pronoun_possessive} exceptional ability to deliver measurable outcomes.")
-        
-        # Leadership context (if leadership present)
-        if achievement_data.get('leadership_details'):
-            additional.append(f"{pronoun_poss_cap} leadership fostered an environment of continuous improvement and professional excellence.")
-        
-        # Innovation context (if innovation present)
-        if achievement_data.get('innovation_details'):
-            additional.append(f"The innovative solutions implemented will serve as a model for future Coast Guard initiatives.")
-        
-        # Mission impact
-        additional.append(f"{pronoun_poss_cap} actions directly enhanced operational readiness and mission accomplishment.")
-        
-        # Professional standards
-        additional.append(f"The professional standards demonstrated serve as an exemplary model for others to emulate.")
-        
-        return additional
-        
     def _build_closing(self, award_type: str, rank: str, last_name: str, pronoun: str) -> str:
         """Build the closing statement."""
         # Format member reference
@@ -469,73 +640,6 @@ class CitationGenerator:
             
         pronoun_reflexive = 'herself' if pronoun == 'she' else 'himself'
         return closing_template.format(name=member_ref, pronoun=pronoun_reflexive)
-        
-    def _format_left_aligned(self, citation: str, award_type: str) -> str:
-        """Format citation with left alignment, respecting line count limits."""
-        max_lines = self.LINE_LIMITS.get(award_type, 12)
-        
-        # Simply wrap text at word boundaries, no forced justification
-        words = citation.split()
-        lines = []
-        current_line = []
-        
-        for word in words:
-            # Check if adding this word would exceed line length
-            test_line = " ".join(current_line + [word])
-            if len(test_line) > self.max_line_length and current_line:
-                # Start a new line
-                lines.append(" ".join(current_line))
-                current_line = [word]
-            else:
-                current_line.append(word)
-        
-        # Add the last line
-        if current_line:
-            lines.append(" ".join(current_line))
-        
-        # If we have too many lines, we need to condense the content
-        if len(lines) > max_lines:
-            # Remove some of the extra context sentences
-            # This is better than truncating mid-sentence
-            sentences = self._split_into_sentences(citation)
-            
-            # Remove sentences from the middle (keep opening and closing)
-            while len(sentences) > 3:  # Keep at least opening, one body, closing
-                # Recombine and check line count
-                test_text = " ".join(sentences)
-                test_lines = self._simple_wrap(test_text, self.max_line_length)
-                
-                if len(test_lines) <= max_lines:
-                    break
-                    
-                # Remove a sentence from the middle
-                middle_index = len(sentences) // 2
-                sentences.pop(middle_index)
-            
-            # Rewrap the condensed text
-            condensed_text = " ".join(sentences)
-            lines = self._simple_wrap(condensed_text, self.max_line_length)
-        
-        return "\n".join(lines)
-    
-    def _simple_wrap(self, text: str, max_length: int) -> List[str]:
-        """Simple word wrapping without justification."""
-        words = text.split()
-        lines = []
-        current_line = []
-        
-        for word in words:
-            test_line = " ".join(current_line + [word])
-            if len(test_line) > max_length and current_line:
-                lines.append(" ".join(current_line))
-                current_line = [word]
-            else:
-                current_line.append(word)
-        
-        if current_line:
-            lines.append(" ".join(current_line))
-            
-        return lines
         
     def _clean_for_narrative(self, text: str) -> str:
         """Clean text for use in narrative."""
