@@ -32,70 +32,45 @@ from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 
-# Try different import strategies for compatibility
-successful_imports = []
-failed_imports = []
+# Import our modules - Railway deployment runs from /app/src
+print(f"Import debug - cwd: {os.getcwd()}, __file__: {__file__}")
+print(f"Import debug - sys.path: {sys.path[:3]}...")  # Show first 3 paths
 
-# Try importing each module individually to identify the problematic one
-modules_to_import = [
-    ("award_engine", "from award_engine import AwardEngine, AwardEngineError, InsufficientDataError"),
-    ("openai_client", "from openai_client import OpenAIClient"),
-    ("config", "from config import current_config, setup_logging"),
-    ("validation", "from validation import ValidationError, AwardeeInfoValidator, AchievementDataValidator, MessageValidator, ExportRequestValidator, SessionDataValidator"),
-    ("session_manager", "from session_manager import store_session_data, get_session_data, clear_session_data, get_or_create_session_id"),
-    ("cg_docx_export", "from cg_docx_export import generate_cg_compliant_docx"),
-]
-
-for module_name, import_statement in modules_to_import:
-    try:
-        exec(import_statement)
-        successful_imports.append(module_name)
-    except ImportError as e:
-        failed_imports.append((module_name, str(e)))
-        print(f"Failed to import {module_name}: {e}")
-
-# If any imports failed, try with src prefix
-if failed_imports:
-    print(f"Failed imports: {failed_imports}")
-    print("Trying with src prefix...")
+try:
+    # Standard imports that should work in deployment
+    from award_engine import AwardEngine, AwardEngineError, InsufficientDataError
+    from openai_client import OpenAIClient
+    from config import current_config, setup_logging
+    from validation import (
+        ValidationError, AwardeeInfoValidator, AchievementDataValidator,
+        MessageValidator, ExportRequestValidator, SessionDataValidator
+    )
+    from session_manager import (
+        store_session_data, get_session_data, clear_session_data,
+        get_or_create_session_id
+    )
+    from cg_docx_export import generate_cg_compliant_docx
+    print("All imports successful")
+except ImportError as e:
+    import traceback
+    print(f"Import failed: {e}")
+    print(f"Current directory: {os.getcwd()}")
+    print(f"Directory contents: {sorted(os.listdir('.'))}")
+    print(f"Python path: {sys.path}")
     
-    # Reset lists
-    src_successful = []
-    src_failed = []
+    # Check if modules exist
+    for module in ['award_engine', 'openai_client', 'config', 'validation', 'session_manager', 'citation_formatter', 'cg_docx_export']:
+        module_file = f"{module}.py"
+        module_dir = module
+        if os.path.exists(module_file):
+            print(f"  ✓ {module_file} exists")
+        elif os.path.exists(module_dir) and os.path.isdir(module_dir):
+            print(f"  ✓ {module_dir}/ directory exists")
+        else:
+            print(f"  ✗ {module} NOT FOUND")
     
-    modules_to_import_src = [
-        ("award_engine", "from src.award_engine import AwardEngine, AwardEngineError, InsufficientDataError"),
-        ("openai_client", "from src.openai_client import OpenAIClient"),
-        ("config", "from src.config import current_config, setup_logging"),
-        ("validation", "from src.validation import ValidationError, AwardeeInfoValidator, AchievementDataValidator, MessageValidator, ExportRequestValidator, SessionDataValidator"),
-        ("session_manager", "from src.session_manager import store_session_data, get_session_data, clear_session_data, get_or_create_session_id"),
-        ("cg_docx_export", "from src.cg_docx_export import generate_cg_compliant_docx"),
-    ]
-    
-    for module_name, import_statement in modules_to_import_src:
-        try:
-            exec(import_statement)
-            src_successful.append(module_name)
-        except ImportError as e:
-            src_failed.append((module_name, str(e)))
-            print(f"Failed to import src.{module_name}: {e}")
-    
-    if src_failed:
-        import traceback
-        print(f"All import attempts failed!")
-        print(f"Direct imports - Success: {successful_imports}, Failed: {failed_imports}")
-        print(f"Src imports - Success: {src_successful}, Failed: {src_failed}")
-        print(f"Current directory: {os.getcwd()}")
-        print(f"Python path: {sys.path}")
-        print(f"Directory contents: {os.listdir('.')}")
-        if os.path.exists('award_engine'):
-            print(f"award_engine contents: {os.listdir('award_engine')}")
-        traceback.print_exc()
-        raise ImportError(
-            f"Failed to import required modules. "
-            f"Current directory: {os.getcwd()}, "
-            f"__file__ location: {__file__}"
-        )
+    traceback.print_exc()
+    raise
 
 # Set up logging
 logger = setup_logging()
