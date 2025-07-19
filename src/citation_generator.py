@@ -125,9 +125,18 @@ class CitationGenerator:
         # Build rich narrative body - aim for MORE content than needed
         body_sentences = self._build_narrative_body(achievement_data, rank, last_name, pronoun)
         
-        # Add extra detail sentences if we have room
+        # Add extra detail sentences - we want to fill all available lines
         extra_sentences = self._generate_additional_context(achievement_data, rank, last_name, pronoun)
-        body_sentences.extend(extra_sentences)
+        
+        # Calculate how many sentences we need to reach line limit
+        max_lines = self.LINE_LIMITS.get(award_type, 12)
+        # Estimate 2-3 lines for opening, 2 lines for closing
+        target_body_sentences = max_lines - 4
+        
+        # Add extra sentences to reach our target
+        if len(body_sentences) < target_body_sentences:
+            sentences_needed = target_body_sentences - len(body_sentences)
+            body_sentences.extend(extra_sentences[:sentences_needed])
         
         narrative_parts.extend(body_sentences)
         
@@ -421,6 +430,9 @@ class CitationGenerator:
     def _generate_additional_context(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
         """Generate additional contextual sentences to fill space."""
         additional = []
+        pronoun_possessive = 'her' if pronoun == 'she' else 'his'
+        pronoun_cap = pronoun.capitalize()
+        pronoun_poss_cap = 'Her' if pronoun == 'she' else 'His'
         
         # Add time-based context
         time_period = achievement_data.get('time_period', '')
@@ -430,6 +442,7 @@ class CitationGenerator:
                 num = duration_match.group(1)
                 unit = duration_match.group(2)
                 additional.append(f"Throughout this {num}-{unit} period, {pronoun} maintained unwavering commitment to excellence.")
+                additional.append(f"{pronoun_poss_cap} consistent dedication during this timeframe established new standards of professional excellence.")
         
         # Add quantitative summaries
         all_numbers = []
@@ -439,21 +452,58 @@ class CitationGenerator:
                 all_numbers.extend(numbers)
         
         if len(all_numbers) >= 3:
-            pronoun_possessive = 'her' if pronoun == 'she' else 'his'
             additional.append(f"These remarkable metrics underscore {pronoun_possessive} exceptional contribution to mission success.")
+            additional.append(f"The quantifiable results achieved demonstrate {pronoun_possessive} unparalleled ability to deliver measurable outcomes.")
+        elif len(all_numbers) >= 1:
+            additional.append(f"{pronoun_poss_cap} results-oriented approach yielded significant measurable improvements across all operational areas.")
         
         # Add leadership amplification
         if achievement_data.get('leadership_details'):
-            pronoun_possessive = 'her' if pronoun == 'she' else 'his'
             additional.append(f"Under {pronoun_possessive} inspired guidance, unit morale and operational effectiveness reached unprecedented levels.")
+            additional.append(f"{pronoun_poss_cap} leadership philosophy fostered an environment of continuous improvement and professional growth.")
+            additional.append(f"Team members consistently praised {pronoun_possessive} ability to motivate and inspire superior performance.")
         
         # Add innovation emphasis
         if achievement_data.get('innovation_details'):
             additional.append(f"This innovative mindset permeated throughout the organization, inspiring others to pursue creative solutions.")
+            additional.append(f"{pronoun_poss_cap} forward-thinking approach revolutionized traditional methods and established new best practices.")
+            additional.append(f"The creative solutions implemented will serve as a model for future Coast Guard initiatives.")
         
-        # Add closing amplification
-        pronoun_possessive = 'her' if pronoun == 'she' else 'his'
+        # Add collaboration context
+        if any('team' in str(item).lower() or 'collaboration' in str(item).lower() for item in achievement_data.get('achievements', [])):
+            additional.append(f"{pronoun_poss_cap} collaborative approach strengthened inter-departmental relationships and operational synergy.")
+            additional.append(f"Through exceptional teamwork and coordination, {pronoun} fostered unprecedented levels of cooperation.")
+        
+        # Add professional development
+        additional.append(f"{pronoun_poss_cap} commitment to professional excellence inspired peers to pursue their own development goals.")
+        additional.append(f"The expertise demonstrated throughout this period established {pronoun} as a subject matter expert.")
+        
+        # Add operational impact
+        additional.append(f"{pronoun_poss_cap} actions directly enhanced operational readiness and mission accomplishment capabilities.")
+        additional.append(f"These contributions significantly improved the unit's ability to execute its critical mission.")
+        
+        # Add resource management
+        if any('saved' in str(item).lower() or 'reduced' in str(item).lower() or 'cost' in str(item).lower() for item in achievement_data.get('impacts', [])):
+            additional.append(f"{pronoun_poss_cap} resource management initiatives resulted in significant cost savings and efficiency gains.")
+            additional.append(f"Through careful stewardship of resources, {pronoun} maximized operational capabilities while minimizing expenditures.")
+        
+        # Add process improvement
+        if any('process' in str(item).lower() or 'system' in str(item).lower() or 'procedure' in str(item).lower() for item in achievement_data.get('achievements', [])):
+            additional.append(f"The process improvements implemented streamlined operations and enhanced overall organizational effectiveness.")
+            additional.append(f"{pronoun_poss_cap} systematic approach to problem-solving yielded sustainable long-term improvements.")
+        
+        # Add recognition context
+        additional.append(f"{pronoun_poss_cap} exceptional performance earned widespread recognition from senior leadership and peers alike.")
+        additional.append(f"The professional standards demonstrated serve as an exemplary model for others to emulate.")
+        
+        # Add mission alignment
+        additional.append(f"Every action taken directly supported and advanced the Coast Guard's core mission objectives.")
+        additional.append(f"{pronoun_poss_cap} unwavering focus on mission accomplishment ensured successful completion of all assigned tasks.")
+        
+        # Add closing amplifications
         additional.append(f"The lasting legacy of {pronoun_possessive} contributions will benefit the Coast Guard for years to come.")
+        additional.append(f"{pronoun_poss_cap} exemplary service during this period epitomizes the Coast Guard's core values.")
+        additional.append(f"These outstanding achievements reflect great credit upon {pronoun} and the United States Coast Guard.")
         
         return additional
         
@@ -676,13 +726,16 @@ class CitationGenerator:
                     current_length = test_length
                     word_index += 1
                     
-                    # Check if we're close to the target and could add more
-                    if current_length >= target_chars_per_line and word_index < len(words):
-                        # See if we can fit one more short word
+                    # Aggressively try to add more words to get closer to max
+                    while word_index < len(words):
                         next_word = words[word_index]
-                        if len(next_word) <= 4 and len(" ".join(current_line + [next_word])) <= self.max_line_length:
+                        test_with_next = " ".join(current_line + [next_word])
+                        if len(test_with_next) <= self.max_line_length:
                             current_line.append(next_word)
+                            current_length = len(test_with_next)
                             word_index += 1
+                        else:
+                            break
                             
                 else:
                     # Word doesn't fit
@@ -778,38 +831,172 @@ class CitationGenerator:
         expanded = words[:]
         current_length = len(" ".join(expanded))
         
-        # Expansion words by context
+        # More comprehensive expansion words by context
         expansions = {
-            'the': ['the exceptional', 'the remarkable', 'the outstanding'],
-            'his': ['his exemplary', 'his distinguished', 'his exceptional'],
-            'her': ['her exemplary', 'her distinguished', 'her exceptional'],
-            'and': ['and notably', 'and significantly', 'and importantly'],
-            'with': ['with remarkable', 'with exceptional', 'with outstanding'],
-            'through': ['through dedicated', 'through persistent', 'through tireless'],
-            'for': ['for critical', 'for essential', 'for vital'],
-            'of': ['of significant', 'of critical', 'of exceptional'],
-            'in': ['in crucial', 'in critical', 'in essential'],
-            'to': ['to successfully', 'to effectively', 'to expertly'],
+            'the': ['the exceptional', 'the remarkable', 'the outstanding', 'the extraordinary', 'the distinguished'],
+            'his': ['his exemplary', 'his distinguished', 'his exceptional', 'his remarkable', 'his outstanding'],
+            'her': ['her exemplary', 'her distinguished', 'her exceptional', 'her remarkable', 'her outstanding'],
+            'and': ['and notably', 'and significantly', 'and importantly', 'and particularly', 'and especially'],
+            'with': ['with remarkable', 'with exceptional', 'with outstanding', 'with extraordinary', 'with unparalleled'],
+            'through': ['through dedicated', 'through persistent', 'through tireless', 'through unwavering', 'through exceptional'],
+            'for': ['for critical', 'for essential', 'for vital', 'for significant', 'for important'],
+            'of': ['of significant', 'of critical', 'of exceptional', 'of considerable', 'of remarkable'],
+            'in': ['in crucial', 'in critical', 'in essential', 'in significant', 'in important'],
+            'to': ['to successfully', 'to effectively', 'to expertly', 'to efficiently', 'to skillfully'],
+            'a': ['a remarkable', 'an exceptional', 'a significant', 'a critical', 'an outstanding'],
+            'by': ['by expertly', 'by skillfully', 'by effectively', 'by successfully', 'by efficiently'],
+            'as': ['as well as', 'as demonstrated by', 'as evidenced by'],
+            'this': ['this remarkable', 'this exceptional', 'this significant', 'this critical'],
+            'that': ['that significantly', 'that remarkably', 'that notably'],
+            'which': ['which significantly', 'which remarkably', 'which effectively'],
+            'from': ['from throughout', 'from across', 'from within'],
+            'during': ['during this critical', 'during this significant', 'during the entire'],
         }
         
-        # Try to expand articles and prepositions
-        i = 0
-        while i < len(expanded) and current_length < max_length - 10:
-            word = expanded[i].lower()
-            base_word = word.rstrip('.,;:')
-            
-            if base_word in expansions:
-                # Find the shortest expansion that fits
-                for expansion in sorted(expansions[base_word], key=len):
+        # Additional single-word expansions
+        single_expansions = {
+            'led': 'spearheaded',
+            'managed': 'orchestrated',
+            'helped': 'facilitated',
+            'made': 'accomplished',
+            'got': 'achieved',
+            'did': 'accomplished',
+            'saved': 'preserved',
+            'used': 'utilized',
+            'showed': 'demonstrated',
+            'gave': 'provided',
+            'took': 'assumed',
+            'put': 'positioned',
+            'set': 'established',
+            'kept': 'maintained',
+            'found': 'discovered',
+            'left': 'departed',
+            'felt': 'experienced',
+            'brought': 'delivered',
+            'began': 'initiated',
+            'started': 'commenced',
+            'ended': 'concluded',
+            'good': 'exceptional',
+            'great': 'outstanding',
+            'important': 'critical',
+            'big': 'significant',
+            'new': 'innovative',
+            'high': 'elevated',
+            'old': 'established',
+            'long': 'extended',
+            'large': 'substantial',
+            'small': 'focused',
+            'next': 'subsequent',
+            'early': 'initial',
+            'young': 'junior',
+            'few': 'select',
+            'many': 'numerous',
+            'much': 'substantial',
+            'most': 'predominant',
+            'other': 'additional',
+            'such': 'particularly',
+            'own': 'personal',
+            'same': 'identical',
+            'able': 'capable',
+            'basic': 'fundamental',
+            'clear': 'transparent',
+            'easy': 'straightforward',
+            'hard': 'challenging',
+            'major': 'significant',
+            'strong': 'robust',
+            'sure': 'certain',
+            'true': 'accurate',
+            'best': 'optimal',
+            'fast': 'expeditious',
+            'direct': 'straightforward',
+            'full': 'comprehensive',
+            'special': 'exceptional',
+            'wrong': 'incorrect',
+            'right': 'appropriate',
+            'real': 'genuine',
+            'free': 'unrestricted',
+            'huge': 'substantial',
+            'popular': 'well-regarded',
+            'recent': 'contemporary',
+            'similar': 'comparable',
+            'bad': 'substandard',
+            'whole': 'entire',
+        }
+        
+        # First pass: Try to expand articles and prepositions
+        changed = True
+        passes = 0
+        while changed and passes < 3 and current_length < max_length - 2:  # Get closer to max
+            changed = False
+            i = 0
+            while i < len(expanded) and current_length < max_length - 2:
+                word = expanded[i].lower()
+                base_word = word.rstrip('.,;:!?')
+                punctuation = word[len(base_word):]
+                
+                if base_word in expansions:
+                    # Try all expansions, pick the longest that fits
+                    best_expansion = None
+                    best_length = current_length
+                    
+                    for expansion in sorted(expansions[base_word], key=len, reverse=True):
+                        test_expanded = expanded[:]
+                        test_expanded[i] = expansion + punctuation
+                        test_length = len(" ".join(test_expanded))
+                        
+                        if test_length <= max_length and test_length > best_length:
+                            best_expansion = expansion + punctuation
+                            best_length = test_length
+                    
+                    if best_expansion:
+                        expanded[i] = best_expansion
+                        current_length = best_length
+                        changed = True
+                
+                i += 1
+            passes += 1
+        
+        # Second pass: Try single word replacements if still space
+        if current_length < max_length - 5:
+            i = 0
+            while i < len(expanded) and current_length < max_length - 2:
+                word = expanded[i].lower()
+                base_word = word.rstrip('.,;:!?')
+                punctuation = word[len(base_word):]
+                
+                if base_word in single_expansions:
+                    replacement = single_expansions[base_word] + punctuation
                     test_expanded = expanded[:]
-                    test_expanded[i] = expansion + word[len(base_word):]  # Preserve punctuation
+                    test_expanded[i] = replacement
                     test_length = len(" ".join(test_expanded))
                     
                     if test_length <= max_length:
-                        expanded = test_expanded
+                        expanded[i] = replacement
                         current_length = test_length
-                        break
-            
-            i += 1
+                
+                i += 1
+        
+        # Third pass: Add descriptive adjectives to nouns if still space
+        if current_length < max_length - 8:
+            noun_adjectives = ['outstanding', 'exceptional', 'remarkable', 'significant', 'critical', 'vital']
+            i = 0
+            while i < len(expanded) - 1 and current_length < max_length - 2:
+                word = expanded[i].lower()
+                next_word = expanded[i + 1].lower() if i + 1 < len(expanded) else ''
+                
+                # Simple heuristic: if current word is 'the' or 'a' and next word doesn't start with adjective
+                if word in ['the', 'a', 'an'] and next_word and not any(next_word.startswith(adj) for adj in ['exceptional', 'remarkable', 'outstanding', 'significant']):
+                    # Try to add an adjective
+                    for adj in noun_adjectives:
+                        test_expanded = expanded[:]
+                        test_expanded.insert(i + 1, adj)
+                        test_length = len(" ".join(test_expanded))
+                        
+                        if test_length <= max_length:
+                            expanded.insert(i + 1, adj)
+                            current_length = test_length
+                            break
+                
+                i += 1
         
         return expanded

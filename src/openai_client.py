@@ -374,8 +374,16 @@ CURRENT ACHIEVEMENT DATA:
 AWARDEE INFO:
 {json.dumps(awardee_info, indent=2)}
 
-Analyze the gaps and weaknesses in this achievement package and provide 5-7 specific, actionable suggestions for improvement. Focus on:
+Analyze the gaps and weaknesses in this achievement package and provide 5-7 specific, actionable suggestions for improvement. 
 
+IMPORTANT: Be realistic about award thresholds. Some achievements have inherent value ceilings:
+- Administrative/cost savings achievements rarely qualify for awards above Commendation Medal
+- Life-saving actions, heroism, or combat achievements are required for Coast Guard Medal or higher
+- Leadership of small teams (under 10) typically caps at Achievement Medal
+- District-wide impact usually required for Commendation Medal
+- Coast Guard-wide impact or O-5+ leadership required for MSM and above
+
+Focus on:
 1. Missing quantifiable impacts (numbers, percentages, dollar amounts)
 2. Insufficient leadership details (how many people, what responsibilities)
 3. Lack of scope clarity (unit/district/coast guard-wide impact)
@@ -386,6 +394,8 @@ Analyze the gaps and weaknesses in this achievement package and provide 5-7 spec
 
 Return a JSON array of suggestion strings. Each suggestion should be specific and actionable.
 Example: ["Add specific numbers: How many personnel did you supervise?", "Quantify the cost savings or efficiency gains achieved"]
+
+If the achievements have fundamental limitations (e.g., no life-saving, no leadership role, limited scope), acknowledge these realistic constraints in your suggestions.
 
 Return ONLY the JSON array, no other text.
 """

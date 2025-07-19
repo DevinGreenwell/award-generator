@@ -355,9 +355,28 @@ class AwardEngine:
                 current_index = i
                 break
         
-        if current_index >= 0 and current_index < len(award_hierarchy) - 1:
-            next_award = award_hierarchy[current_index + 1]
-            suggestions.append(f"To potentially qualify for a {next_award}, focus on broader scope, greater leadership responsibility, and more significant quantifiable impact")
+        # Award thresholds based on achievement type
+        if current_index >= 0:
+            # Check if there are fundamental barriers to higher awards
+            has_life_saving = any('life' in str(item).lower() or 'lives' in str(item).lower() or 'rescue' in str(item).lower() 
+                                for item in achievements + impacts)
+            has_heroism = any('heroic' in str(item).lower() or 'courage' in str(item).lower() or 'risk' in str(item).lower() 
+                             for item in achievements + impacts)
+            has_combat = any('combat' in str(item).lower() or 'hostile' in str(item).lower() or 'enemy' in str(item).lower() 
+                           for item in achievements + impacts)
+            
+            # Coast Guard Medal and higher heroism awards have specific requirements
+            if current_index < 3 and not has_life_saving and not has_heroism:
+                suggestions.append("Note: Higher personal awards (Coast Guard Medal, Bronze Star) typically require life-saving actions, extraordinary heroism, or combat-related achievements")
+            elif current_index >= 0 and current_index < len(award_hierarchy) - 1:
+                next_award = award_hierarchy[current_index + 1]
+                # More realistic suggestions based on award level
+                if current_index < 2:  # Letter or Achievement Medal
+                    suggestions.append(f"To potentially qualify for a {next_award}, demonstrate leadership of larger teams (10+ people), district-wide impact, or significant cost savings ($500K+)")
+                elif current_index == 2:  # Commendation Medal
+                    suggestions.append(f"To potentially qualify for a {next_award}, show sustained superior performance over 2+ years, lead major initiatives, or achieve Coast Guard-wide impact")
+                else:  # Higher awards
+                    suggestions.append(f"Higher awards require exceptional service in positions of great responsibility, typically at O-5 level or above")
         
         # Always include these general suggestions if we don't have enough specific ones
         if len(suggestions) < 4:

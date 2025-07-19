@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // If there's a recommendation, show it
                 if (data.recommendation) {
-                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions);
+                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions, data.recommendation.scores);
                     currentAward = data.recommendation.award;
                     workflowState = 'recommendation';
                     updateWorkflowUI();
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!data.success) {
                 throw new Error(data.error || 'Failed to generate recommendation');
             }
-            displayAward(data.award, data.explanation, data.suggestions);
+            displayAward(data.award, data.explanation, data.suggestions, data.scores);
             currentAward = data.award;
             
             // Update workflow state
@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            displayAward(data.award, data.explanation, data.suggestions);
+            displayAward(data.award, data.explanation, data.suggestions, data.scores);
             currentAward = data.award;
             
             // Update workflow state to recommendation (even if we were in finalized state)
@@ -549,16 +549,46 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Display improvement suggestions
             if (data.suggestions && data.suggestions.length > 0) {
-                const improvementHtml = `
+                let improvementHtml = `
                     <div class="improvement-suggestions">
                         <h3>Improvement Suggestions for ${data.current_award}</h3>
                         <p>Here are ways to strengthen your award recommendation:</p>
                         <ul>
                             ${data.suggestions.map(s => `<li>${s}</li>`).join('')}
                         </ul>
-                        <!-- Score breakdown removed for CG compliance -->
-                    </div>
                 `;
+                
+                // Add current scores if available
+                if (data.current_scores) {
+                    improvementHtml += '<div class="current-scores"><h4>Current Scoring:</h4>';
+                    improvementHtml += '<table class="scores-table">';
+                    improvementHtml += '<thead><tr><th>Criterion</th><th>Score</th></tr></thead>';
+                    improvementHtml += '<tbody>';
+                    
+                    const criteriaNames = {
+                        'measurable_impact': 'Measurable Impact',
+                        'leadership': 'Leadership',
+                        'innovation': 'Innovation',
+                        'scope': 'Scope of Impact',
+                        'challenges': 'Challenges Overcome',
+                        'justification': 'Justification Quality'
+                    };
+                    
+                    for (const [key, value] of Object.entries(data.current_scores)) {
+                        if (key !== 'total_weighted' && value > 0) {
+                            const displayName = criteriaNames[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            improvementHtml += `<tr><td>${displayName}</td><td>${value.toFixed(1)}/5.0</td></tr>`;
+                        }
+                    }
+                    
+                    if (data.current_scores.total_weighted) {
+                        improvementHtml += '<tr class="total-row"><td><strong>Total Score</strong></td><td><strong>' + data.current_scores.total_weighted.toFixed(0) + '/100</strong></td></tr>';
+                    }
+                    
+                    improvementHtml += '</tbody></table></div>';
+                }
+                
+                improvementHtml += '</div>';
                 awardContent.innerHTML = improvementHtml;
             }
             
@@ -634,16 +664,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function displayAward(award, explanation, improvements) {
+    function displayAward(award, explanation, improvements, scores) {
         // Clone template
         const awardNode = awardTpl.content.cloneNode(true);
         const titleEl = awardNode.querySelector('.award-title');
         const explanationEl = awardNode.querySelector('.award-explanation');
+        const scoresEl = awardNode.querySelector('.award-scores');
         const improvementsEl = awardNode.querySelector('.improvement-suggestions');
         
         // Set content
         titleEl.textContent = award;
         explanationEl.innerHTML = explanation;
+        
+        // Add scoring matrix if available
+        if (scores) {
+            let scoreHtml = '<div class="score-matrix"><h4>Scoring Matrix:</h4>';
+            scoreHtml += '<table class="scores-table">';
+            scoreHtml += '<thead><tr><th>Criterion</th><th>Score</th></tr></thead>';
+            scoreHtml += '<tbody>';
+            
+            // Display individual scores
+            const criteriaNames = {
+                'measurable_impact': 'Measurable Impact',
+                'leadership': 'Leadership',
+                'innovation': 'Innovation',
+                'scope': 'Scope of Impact',
+                'challenges': 'Challenges Overcome',
+                'justification': 'Justification Quality'
+            };
+            
+            for (const [key, value] of Object.entries(scores)) {
+                if (key !== 'total_weighted' && value > 0) {
+                    const displayName = criteriaNames[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    scoreHtml += `<tr><td>${displayName}</td><td>${value.toFixed(1)}/5.0</td></tr>`;
+                }
+            }
+            
+            // Add total score
+            if (scores.total_weighted) {
+                scoreHtml += '<tr class="total-row"><td><strong>Total Score</strong></td><td><strong>' + scores.total_weighted.toFixed(0) + '/100</strong></td></tr>';
+            }
+            
+            scoreHtml += '</tbody></table></div>';
+            scoresEl.innerHTML = scoreHtml;
+        } else {
+            scoresEl.style.display = 'none';
+        }
         
         // Add improvement suggestions if available
         if (improvements && improvements.length > 0) {
@@ -884,7 +950,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayFinalAward(data.finalized_award.award, data.finalized_award.citation);
                     workflowState = 'finalized';
                 } else if (data.recommendation) {
-                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions);
+                    displayAward(data.recommendation.award, data.recommendation.explanation, data.recommendation.suggestions, data.recommendation.scores);
                     currentAward = data.recommendation.award;
                     workflowState = 'recommendation';
                 } else {
