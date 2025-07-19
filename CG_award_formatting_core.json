@@ -1,0 +1,154 @@
+{
+  "personal_awards": {
+    "Meritorious_Service_Medal_and_below": {
+      "orientation": "landscape",
+      "paper": "award stationery",
+      "margins": {
+        "side": "1 inch",
+        "top": "1 inch",
+        "bottom": "2 inch"
+      },
+      "seal": {
+        "diameter": "2 inch",
+        "location": "lower left corner aligned with left margin"
+      },
+      "body": {
+        "max_lines": 12,
+        "font": {
+          "family": "Times New Roman",
+          "size_pt": 11,
+          "style": "bold"
+        }
+      },
+      "line_limit_with_device": 14,
+      "devices_allowed": [
+        "Operational \"O\" Distinguishing Device",
+        "Valor \"V\" Device"
+      ],
+      "kerning_modifications": "not authorized",
+      "acronyms": "not authorized (very limited abbreviations allowed)",
+      "heading_block_spacing": {
+        "default": "double",
+        "exceptions": {
+          "subsequent_award_star_line": "single",
+          "name_rating_service_enlisted": "single"
+        }
+      }
+    },
+    "Above_Meritorious_Service_Medal": {
+      "orientation": "landscape",
+      "paper": "award stationery",
+      "margins": {
+        "side": "1 inch",
+        "top": "1 inch",
+        "bottom": "2 inch"
+      },
+      "seal": {
+        "diameter": "2 inch",
+        "location": "lower left corner aligned with left margin"
+      },
+      "body": {
+        "max_lines": 16,
+        "font": {
+          "family": "Times New Roman",
+          "size_pt": 11,
+          "style": "bold"
+        }
+      },
+      "line_limit_with_valor": 18,
+      "devices_allowed": [
+        "Valor \"V\" Device"
+      ],
+      "kerning_modifications": "not authorized",
+      "acronyms": "not authorized (very limited abbreviations allowed)"
+    },
+    "citation_structure": {
+      "opening_sentence_elements": [
+        "standard opening phrase specific to the award",
+        "duty assignment of the individual (omit for unit awards)",
+        "dates or inclusive dates of service",
+        "optional description of operations of unit"
+      ],
+      "statement_of_heroic_acts": "specific duty assignments, accomplishments, attributes, and impact (identify recipient in CAPS, include combat statement if applicable)",
+      "commendatory_remarks": "standard closing sentence specific to award level"
+    },
+    "rank_rate_reference": "Use rank/rate at time of action, not presentation"
+  },
+  "unit_citations": {
+    "Meritorious_Team_Commendation_and_higher": {
+      "orientation": "portrait",
+      "paper": "Commandant letterhead",
+      "margins": {
+        "side": "1 inch",
+        "bottom": "1 inch",
+        "top": "1.9 inch"
+      },
+      "body": {
+        "max_lines": 24,
+        "font": {
+          "family": "Times New Roman",
+          "size_pt": 11,
+          "style": "bold"
+        }
+      },
+      "line_limit_with_operational_device": 26,
+      "signature_block": {
+        "placement": "centered",
+        "offset": "4 blank lines below citation text"
+      },
+      "kerning_modifications": "not authorized",
+      "acronyms": "not authorized (very limited abbreviations allowed)"
+    },
+    "standard_phrases": {
+      "UC_opening": "For exceptionally meritorious service from (starting date) to (ending date) while ...",
+      "UC_closing": "The professionalism, pride, and devotion to duty displayed by (unit name) are in keeping with the highest traditions of the United States Coast Guard.",
+      "MUC_opening": "For meritorious service from (starting date) to (ending date) while ...",
+      "MUC_closing": "The devotion to duty and outstanding performance demonstrated by (unit name) are in keeping with the highest traditions of the United States Coast Guard.",
+      "MTC_opening": "For exceptionally meritorious service from (starting date) to (ending date) while serving on (name of team or group) ..."
+    }
+  },
+  "summary_of_action": {
+    "required_for": [
+      "extraordinary heroism",
+      "Coast Guard Unit Commendation",
+      "Meritorious Service Medal",
+      "awards higher than MSM"
+    ],
+    "page_limit": {
+      "MSM": 1,
+      "others": "no limit"
+    },
+    "extraordinary_heroism_additional_requirements": [
+      "At least two eyewitness statements addressing peril",
+      "Precise location details (sketch/map)",
+      "Date, time, weather, lighting conditions",
+      "Names and assistance details of all involved personnel",
+      "Rescuer swimming qualifications (lifesaving cases)",
+      "Detailed fire rescue description if applicable"
+    ]
+  },
+  "devices": {
+    "Operational_O": {
+      "description": "Award for operational hands\u2011on missions; citation must specifically authorize; both individual work and unit operational.",
+      "eligible_awards": "personal and unit awards"
+    },
+    "Valor_V": {
+      "description": "Heroic act while directly participating in combat; Commandant is sole approval authority; citation must authorize."
+    },
+    "Stars": {
+      "large_star": "5/16 inch for subsequent personal awards",
+      "small_star": "3/16 inch for campaign/service awards"
+    },
+    "Oak_Leaf_Cluster": "Denotes subsequent awards where applicable"
+  },
+  "certificate_and_folders": {
+    "medal_award_folder": {
+      "type": "padded presentation folder (short\u2011side opening)",
+      "placement": {
+        "certificate": "right",
+        "citation": "left"
+      }
+    },
+    "Commandants_LOC_folder": "book\u2011type stiff\u2011back award folder"
+  }
+}

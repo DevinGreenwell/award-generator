@@ -3,8 +3,7 @@ Base Award Engine class for Coast Guard award recommendations.
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from .criteria import SCORING_WEIGHTS, AWARD_THRESHOLDS, AWARD_CRITERIA
 from .scorers import CriteriaScorer
@@ -232,11 +231,8 @@ class AwardEngine:
         explanation = f"<h3>Award Recommendation: {award}</h3>"
         explanation += f"<p><strong>Description:</strong> {criteria.get('description', '')}</p>"
         
-        # Add scoring summary
-        total_score = scores.get('total_weighted', 0)
-        threshold = criteria.get('threshold', 0)
-        explanation += f"<p><strong>Score:</strong> {total_score} (Threshold: {threshold})</p>"
-        
+        # Remove scoring display - not compliant with CG format
+        # Just provide justification
         explanation += "<h4>Justification:</h4>"
         explanation += f"<p>{achievement_data.get('justification', 'Based on the provided accomplishments and their impact.')}</p>"
         
@@ -269,8 +265,7 @@ class AwardEngine:
             explanation += f"<h4>Time Period:</h4>"
             explanation += f"<p>{time_period}</p>"
         
-        # Scoring breakdown
-        explanation += self._generate_scoring_breakdown(scores)
+        # Remove scoring breakdown - not compliant with CG format
         
         return explanation
     

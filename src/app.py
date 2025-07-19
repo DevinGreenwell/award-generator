@@ -535,7 +535,8 @@ def api_export():
             'success': True,
             'filename': filename,
             'download_url': '/api/export/download/docx',
-            'format': 'docx'
+            'format': 'docx',
+            'compliant': True  # Flag to indicate CG-compliant format
         })
         
     elif export_format == 'json':
@@ -570,8 +571,16 @@ def download_docx():
     if not export_data:
         raise ValidationError("No export data found. Please generate an export first.")
     
-    # Generate DOCX
-    doc_bytes = generate_docx_export(export_data)
+    # Check if we should use CG-compliant format
+    use_compliant = request.args.get('compliant', 'true').lower() == 'true'
+    
+    if use_compliant:
+        # Use the CG-compliant export
+        from cg_docx_export import generate_cg_compliant_docx
+        doc_bytes = generate_cg_compliant_docx(export_data)
+    else:
+        # Use the original format (for backwards compatibility)
+        doc_bytes = generate_docx_export(export_data)
     
     # Create filename
     awardee_info = export_data.get('awardee_info', {})
@@ -585,7 +594,7 @@ def download_docx():
     response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
     response.headers['Content-Length'] = len(doc_bytes)
     
-    logger.info(f"DOCX download completed: {filename}")
+    logger.info(f"DOCX download completed: {filename} (compliant={use_compliant})")
     
     return response
 

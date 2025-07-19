@@ -15,14 +15,16 @@ current_dir = Path(__file__).parent
 if current_dir.name == 'src' and str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
 
-import openai
+from openai import OpenAI
 
-# Handle different OpenAI library versions
-try:
-    from openai import error as openai_error
-except ImportError:
-    # Newer versions of openai library have different error structure
-    import openai as openai_error
+# Import error types from the new OpenAI library
+from openai import (
+    RateLimitError,
+    AuthenticationError,
+    BadRequestError,
+    APIConnectionError,
+    APIStatusError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,9 @@ class OpenAIClient:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")
         if not self.api_key:
             raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
-        openai.api_key = self.api_key
+        
+        # Initialize the new OpenAI client
+        self.client = OpenAI(api_key=self.api_key)
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini-2024-07-18")
         self.max_retries = 3
         self.retry_delay = 1  # seconds
@@ -49,21 +53,25 @@ class OpenAIClient:
         """Handle various OpenAI API errors with appropriate responses."""
         error_message = str(error)
         
-        if isinstance(error, openai_error.RateLimitError):
+        if isinstance(error, RateLimitError):
             logger.warning(f"Rate limit hit during {context}: {error_message}")
             return {"error": "Rate limit reached. Please try again in a moment."}
         
-        elif isinstance(error, openai_error.AuthenticationError):
+        elif isinstance(error, AuthenticationError):
             logger.error(f"Authentication error during {context}: {error_message}")
             return {"error": "Authentication failed. Please check API key configuration."}
         
-        elif isinstance(error, openai_error.InvalidRequestError):
+        elif isinstance(error, BadRequestError):
             logger.error(f"Invalid request during {context}: {error_message}")
             return {"error": "Invalid request. Please check input data."}
         
-        elif isinstance(error, openai_error.ServiceUnavailableError):
-            logger.error(f"Service unavailable during {context}: {error_message}")
-            return {"error": "OpenAI service is temporarily unavailable. Please try again later."}
+        elif isinstance(error, APIConnectionError):
+            logger.error(f"Connection error during {context}: {error_message}")
+            return {"error": "Connection error. Please check your internet connection and try again."}
+        
+        elif isinstance(error, APIStatusError):
+            logger.error(f"API error during {context}: {error_message}")
+            return {"error": "OpenAI service error. Please try again later."}
         
         else:
             logger.error(f"Unexpected error during {context}: {error_message}", exc_info=True)
@@ -113,10 +121,10 @@ class OpenAIClient:
                     if max_tokens:
                         kwargs["max_tokens"] = max_tokens
                 
-                response = openai.ChatCompletion.create(**kwargs)
-                return response.choices[0].message
+                response = self.client.chat.completions.create(**kwargs)
+                return response.choices[0].message.model_dump()
                 
-            except openai_error.RateLimitError as e:
+            except RateLimitError as e:
                 if attempt < self.max_retries - 1:
                     delay = self.retry_delay * (2 ** attempt)  # Exponential backoff
                     logger.info(f"Rate limit hit, retrying in {delay} seconds...")
@@ -437,7 +445,28 @@ Return ONLY the JSON array, no other text.
         return suggestions[:6]  # Return max 6 suggestions
 
     def draft_award(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
-        """Generate a formal award citation."""
+        """Generate a formal award citation compliant with CG standards."""
+        # Import the citation formatter
+        from citation_formatter import CitationFormatter
+        
+        # Use the formatter to create a compliant citation
+        formatter = CitationFormatter()
+        citation = formatter.format_citation(award, awardee_info, achievement_data)
+        
+        # Validate the citation
+        is_valid, issues = formatter.validate_citation(citation, award)
+        
+        if not is_valid:
+            logger.warning(f"Citation validation issues: {issues}")
+            # Try to fix common issues
+            if any("exceeds limit" in issue for issue in issues):
+                # Citation too long, need to condense
+                return self._generate_condensed_citation(award, achievement_data, awardee_info)
+        
+        return citation
+    
+    def _generate_condensed_citation(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
+        """Generate a condensed citation when the standard one is too long."""
         # Check if operational device is authorized
         has_operational_device = awardee_info.get('operational_device', False)
         

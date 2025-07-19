@@ -556,12 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <ul>
                             ${data.suggestions.map(s => `<li>${s}</li>`).join('')}
                         </ul>
-                        <p><strong>Current Score Breakdown:</strong></p>
-                        <ul>
-                            ${Object.entries(data.current_scores || {}).map(([key, value]) => 
-                                `<li>${key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}: ${value}/5</li>`
-                            ).join('')}
-                        </ul>
+                        <!-- Score breakdown removed for CG compliance -->
                     </div>
                 `;
                 awardContent.innerHTML = improvementHtml;

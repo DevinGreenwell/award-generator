@@ -1,4 +1,3 @@
-import sys
 import os
 
 # Import the Flask app directly
