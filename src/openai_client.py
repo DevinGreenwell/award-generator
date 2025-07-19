@@ -27,7 +27,14 @@ from openai import (
 )
 
 # Import citation formatter at module level
-from citation_formatter import CitationFormatter
+try:
+    from citation_formatter import CitationFormatter
+except ImportError:
+    try:
+        from src.citation_formatter import CitationFormatter
+    except ImportError:
+        print("Warning: Could not import CitationFormatter")
+        CitationFormatter = None
 
 logger = logging.getLogger(__name__)
 
@@ -449,6 +456,11 @@ Return ONLY the JSON array, no other text.
 
     def draft_award(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
         """Generate a formal award citation compliant with CG standards."""
+        # Check if CitationFormatter is available
+        if CitationFormatter is None:
+            # Fallback to the old method if CitationFormatter is not available
+            return self._generate_condensed_citation(award, achievement_data, awardee_info)
+            
         # Use the formatter to create a compliant citation
         formatter = CitationFormatter()
         citation = formatter.format_citation(award, awardee_info, achievement_data)
