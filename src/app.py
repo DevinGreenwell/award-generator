@@ -46,6 +46,7 @@ try:
         store_session_data, get_session_data, clear_session_data,
         get_or_create_session_id
     )
+    from cg_docx_export import generate_cg_compliant_docx
 except ImportError:
     # If direct import fails, try with src prefix
     try:
@@ -60,6 +61,7 @@ except ImportError:
             store_session_data, get_session_data, clear_session_data,
             get_or_create_session_id
         )
+        from src.cg_docx_export import generate_cg_compliant_docx
     except ImportError as e:
         # Log the error and re-raise with helpful message
         import traceback
@@ -576,7 +578,6 @@ def download_docx():
     
     if use_compliant:
         # Use the CG-compliant export
-        from cg_docx_export import generate_cg_compliant_docx
         doc_bytes = generate_cg_compliant_docx(export_data)
     else:
         # Use the original format (for backwards compatibility)

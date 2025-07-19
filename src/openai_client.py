@@ -26,6 +26,9 @@ from openai import (
     APIStatusError
 )
 
+# Import citation formatter at module level
+from citation_formatter import CitationFormatter
+
 logger = logging.getLogger(__name__)
 
 
@@ -446,9 +449,6 @@ Return ONLY the JSON array, no other text.
 
     def draft_award(self, award: str, achievement_data: Dict, awardee_info: Dict) -> str:
         """Generate a formal award citation compliant with CG standards."""
-        # Import the citation formatter
-        from citation_formatter import CitationFormatter
-        
         # Use the formatter to create a compliant citation
         formatter = CitationFormatter()
         citation = formatter.format_citation(award, awardee_info, achievement_data)
