@@ -24,16 +24,18 @@ body {
     line-height: 1.6;
     color: var(--dark-color);
     background-color: var(--light-gray);
+    margin: 0;
+    padding: 0;
 }
 
 .app-container {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    max-width: 1400px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
     background-color: white;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 /* Header Styles */
@@ -178,7 +180,7 @@ header {
 /* Main Content Styles */
 main {
     flex: 1;
-    padding: 1rem;
+    padding: 0;
     position: relative;
     z-index: 1;
 }
@@ -187,6 +189,8 @@ main {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    padding: 1rem;
+    height: 100%;
 }
 
 @media (min-width: 992px) {
@@ -199,7 +203,8 @@ main {
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: 70vh;
+    height: calc(100vh - 200px);
+    min-height: 500px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     overflow: hidden;
