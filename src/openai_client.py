@@ -233,7 +233,7 @@ Extract comprehensive data and return ONLY valid JSON with this EXACT structure:
     "scope": "Detailed description of organizational reach (individual/unit/sector/district/area/coast guard-wide/national/international)",
     "time_period": "Duration or timeframe of accomplishments (be specific: days/weeks/months/years)",
     "valor_indicators": [
-        "List ANY life-saving actions, rescue operations, dangerous situations, or heroic acts"
+        "List ONLY actual life-saving actions, rescue operations where lives were saved, or heroic acts during real emergencies (NOT prevention, planning, or potential hazards)"
     ],
     "quantifiable_metrics": [
         "List ALL specific numbers, percentages, dollar amounts, time savings, or measurable results"

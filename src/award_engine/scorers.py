@@ -262,21 +262,74 @@ class CriteriaScorer:
     
     @staticmethod
     def score_valor(achievement_data: dict, combined_text: str) -> float:
-        """Enhanced valor scoring using dedicated valor_indicators field"""
+        """Valor scoring - ONLY for actual emergency response and life-saving actions"""
         score = 0.0
         combined_text_lower = combined_text.lower()
         
-        # Primary scoring from valor_indicators field
+        # Define strict valor indicators - actual emergency response only
+        strict_valor_keywords = [
+            'saved life', 'saved lives', 'life-saving action', 'heroic rescue',
+            'water rescue', 'maritime rescue', 'helicopter rescue', 'boat rescue',
+            'swimmer rescue', 'aviation rescue', 'search and rescue operation',
+            'medevac', 'medical evacuation', 'casualty evacuation',
+            'man overboard', 'person in water', 'drowning victim', 
+            'hypothermia rescue', 'ice rescue', 'cliff rescue', 'mountain rescue',
+            'swift water rescue', 'flood rescue', 'surf rescue', 'night rescue',
+            'recovered survivors', 'extracted personnel', 'evacuated civilians',
+            'rescued crew', 'pulled from wreckage', 'freed from entrapment',
+            'rescued from fire', 'saved from drowning', 'prevented loss of life',
+            'rescued from burning', 'rescued from sinking', 'emergency evacuation'
+        ]
+        
+        # Check for actual life-saving/rescue actions
+        life_saving_found = False
+        rescue_count = 0
+        
+        for keyword in strict_valor_keywords:
+            if keyword in combined_text_lower:
+                life_saving_found = True
+                rescue_count += 1
+        
+        # Also check for specific rescue numbers (e.g., "rescued 3 people")
+        rescue_patterns = [
+            r'rescued\s+(\d+)\s+(?:people|persons|individuals|crew|passengers|victims)',
+            r'saved\s+(\d+)\s+(?:lives|people|persons|individuals)',
+            r'evacuated\s+(\d+)\s+(?:people|persons|individuals|casualties)',
+            r'recovered\s+(\d+)\s+(?:survivors|victims|people)'
+        ]
+        
+        for pattern in rescue_patterns:
+            matches = re.findall(pattern, combined_text_lower)
+            if matches:
+                life_saving_found = True
+                rescue_count += len(matches)
+        
+        # Primary scoring from valor_indicators field - but verify they're actual emergencies
         valor_items = achievement_data.get('valor_indicators', [])
+        verified_valor_items = []
         
-        if len(valor_items) >= 2:
-            score += 4.0  # Multiple valor actions
-        elif len(valor_items) >= 1:
-            score += 3.0  # Valor demonstrated
+        for item in valor_items:
+            item_lower = str(item).lower()
+            # Check if this is an actual emergency response
+            if any(keyword in item_lower for keyword in ['rescue', 'saved', 'emergency', 'evacuation', 'life-saving']):
+                verified_valor_items.append(item)
         
-        # Keyword analysis
-        keyword_matches = sum(1 for keyword in VALOR_KEYWORDS if keyword in combined_text_lower)
-        score += min(2.0, keyword_matches * 0.3)  # Max 2.0 bonus from keywords
+        # Score based on verified emergency response actions
+        if len(verified_valor_items) >= 2 and life_saving_found:
+            score = 5.0  # Multiple verified life-saving actions
+        elif len(verified_valor_items) >= 1 and life_saving_found:
+            score = 4.0  # Verified life-saving action
+        elif life_saving_found and rescue_count >= 2:
+            score = 3.5  # Multiple rescue keywords found
+        elif life_saving_found:
+            score = 3.0  # Life-saving action found
+        else:
+            # No actual emergency response found
+            score = 0.0
+        
+        # Log if valor score is being applied
+        if score > 0:
+            logger.info(f"Valor score applied: {score} (rescue_count: {rescue_count}, verified_items: {len(verified_valor_items)})")
         
         return normalize_score(score)
     
@@ -326,21 +379,56 @@ class CriteriaScorer:
     
     @staticmethod
     def score_emergency_response(achievement_data: dict, combined_text: str) -> float:
-        """Score emergency response and crisis management"""
+        """Score emergency response - actual emergency/crisis situations only"""
         score = 0.0
         combined_text_lower = combined_text.lower()
         
-        # Primary scoring from emergency_response field
+        # Define strict emergency indicators - actual emergencies only
+        strict_emergency_keywords = [
+            'emergency response', 'crisis response', 'disaster response',
+            'search and rescue', 'sar operation', 'mayday', 'distress call',
+            'emergency evacuation', 'disaster relief', 'humanitarian assistance',
+            'incident command', 'emergency operations center', 
+            'time-critical mission', 'urgent mission', 'emergency deployment',
+            'natural disaster', 'hurricane response', 'flood response',
+            'fire response', 'earthquake response', 'tsunami response',
+            'mass casualty', 'triage', 'emergency medical', 'trauma response',
+            'vessel in distress', 'aircraft emergency', 'maritime emergency',
+            'immediate response', 'rapid response team', 'first on scene',
+            'emergency activation', 'crisis management', 'disaster recovery'
+        ]
+        
+        # Check for actual emergency situations
+        actual_emergency_found = False
+        emergency_count = 0
+        
+        for keyword in strict_emergency_keywords:
+            if keyword in combined_text_lower:
+                actual_emergency_found = True
+                emergency_count += 1
+        
+        # Primary scoring from emergency_response field - but verify they're actual emergencies
         emergency_items = achievement_data.get('emergency_response', [])
+        verified_emergency_items = []
         
-        if len(emergency_items) >= 2:
-            score += 3.0  # Multiple emergency responses
-        elif len(emergency_items) >= 1:
-            score += 2.0  # Emergency response experience
+        for item in emergency_items:
+            item_lower = str(item).lower()
+            # Check if this is an actual emergency situation (not routine or prevention)
+            if any(keyword in item_lower for keyword in ['response', 'crisis', 'emergency', 'disaster', 'distress', 'urgent']):
+                verified_emergency_items.append(item)
         
-        # Keyword analysis
-        keyword_matches = sum(1 for keyword in EMERGENCY_KEYWORDS if keyword in combined_text_lower)
-        score += min(3.0, keyword_matches * 0.3)  # Max 3.0 bonus from keywords
+        # Score based on verified emergency responses
+        if len(verified_emergency_items) >= 2 and actual_emergency_found:
+            score = 4.0  # Multiple verified emergency responses
+        elif len(verified_emergency_items) >= 1 and actual_emergency_found:
+            score = 3.0  # Verified emergency response
+        elif actual_emergency_found and emergency_count >= 2:
+            score = 2.5  # Multiple emergency keywords found
+        elif actual_emergency_found:
+            score = 2.0  # Emergency response found
+        else:
+            # No actual emergency response found
+            score = 0.0
         
         return normalize_score(score)
     
