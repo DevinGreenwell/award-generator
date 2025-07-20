@@ -267,6 +267,15 @@ CRITICAL EXTRACTION INSTRUCTIONS:
 - Include ALL challenges: resource constraints, time pressure, difficult conditions, complex problems
 - Look for scope indicators: individual/team/unit/sector/district/area/coast guard-wide/national/international
 - Identify valor: life-saving, rescue operations, dangerous conditions, personal risk
+
+IMPORTANT CONTEXT - Coast Guard Rank Expectations:
+- Consider the awardee's rank when evaluating achievements
+- Junior enlisted (E-1 to E-4) are not expected to lead large teams or have organization-wide impact
+- Mid-level enlisted (E-5 to E-7) typically lead teams of 5-30 people and impact their unit
+- Senior enlisted (E-8 to E-9) lead larger groups and may have sector/district impact
+- Junior officers (O-1 to O-3) lead divisions/departments with unit-level impact
+- Senior officers (O-4+) are expected to have sector/district/area-wide impact
+- Be realistic about what constitutes exceptional performance for each rank level
 - Extract collaboration: inter-agency, joint operations, partnerships, coordination efforts
 - Find training activities: instruction given, mentoring provided, knowledge transfer
 - Identify above-and-beyond: voluntary work, extra hours, personal sacrifice, exceptional effort
@@ -402,12 +411,21 @@ AWARDEE INFO:
 
 Analyze the gaps and weaknesses in this achievement package and provide 5-7 specific, actionable suggestions for improvement. 
 
-IMPORTANT: Be realistic about award thresholds. Some achievements have inherent value ceilings:
+IMPORTANT: Be realistic about award thresholds AND consider the awardee's rank:
+
+RANK-BASED EXPECTATIONS:
+- Junior Enlisted (E-1 to E-4): Leading 2-5 people is significant; unit-level impact is exceptional
+- Mid-level Enlisted (E-5 to E-7): Expected to lead 5-30 people; sector impact for higher awards
+- Senior Enlisted (E-8 to E-9): Expected to lead 30+ people; district/area impact expected
+- Junior Officers (O-1 to O-3): Expected to lead divisions; sector/district impact for higher awards
+- Senior Officers (O-4+): Expected to have district/area/CG-wide impact; leadership of 50+ expected
+
+GENERAL AWARD THRESHOLDS:
 - Administrative/cost savings achievements rarely qualify for awards above Commendation Medal
 - Life-saving actions, heroism, or combat achievements are required for Coast Guard Medal or higher
-- Leadership of small teams (under 10) typically caps at Achievement Medal
-- District-wide impact usually required for Commendation Medal
-- Coast Guard-wide impact or O-5+ leadership required for MSM and above
+- Achievement Medal: Appropriate for exceptional performance at or slightly above rank expectations
+- Commendation Medal: Requires performance significantly above rank expectations or broader impact
+- MSM and above: Requires exceptional leadership AND organizational impact well above rank norm
 
 Focus on:
 1. Missing quantifiable impacts (numbers, percentages, dollar amounts)

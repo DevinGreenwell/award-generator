@@ -255,8 +255,9 @@ def api_recommend():
     store_session_data(session, 'achievement_data', achievement_data)
     store_session_data(session, 'awardee_info', awardee_info)
     
-    # Score the achievements
-    scores = award_engine.score_achievements(achievement_data)
+    # Score the achievements with rank calibration
+    awardee_rank = awardee_info.get('rank', '')
+    scores = award_engine.score_achievements(achievement_data, awardee_rank)
     
     # Get award recommendation
     recommendation = award_engine.recommend_award(scores)
@@ -319,8 +320,9 @@ def api_refresh():
     # Update file-based session
     store_session_data(session, 'achievement_data', achievement_data)
     
-    # Score and recommend
-    scores = award_engine.score_achievements(achievement_data)
+    # Score and recommend with rank calibration
+    awardee_rank = awardee_info.get('rank', '')
+    scores = award_engine.score_achievements(achievement_data, awardee_rank)
     recommendation = award_engine.recommend_award(scores)
     award = recommendation["award"]
     
@@ -379,8 +381,9 @@ def api_improve():
         current_award, achievement_data, awardee_info
     )
     
-    # Get current scores for reference
-    current_scores = award_engine.score_achievements(achievement_data)
+    # Get current scores for reference with rank calibration
+    awardee_rank = awardee_info.get('rank', '')
+    current_scores = award_engine.score_achievements(achievement_data, awardee_rank)
     
     # Store improvement suggestions in file-based session
     improvement_data = {

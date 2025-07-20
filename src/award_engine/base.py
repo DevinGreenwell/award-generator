@@ -9,6 +9,7 @@ from .criteria import SCORING_WEIGHTS, AWARD_THRESHOLDS, AWARD_CRITERIA
 from .scorers import CriteriaScorer
 from .utils import bootstrap_fields
 from .exceptions import ScoringError, InsufficientDataError
+from .rank_calibration import RankCalibrator
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +27,15 @@ class AwardEngine:
         self.award_thresholds = AWARD_THRESHOLDS
         self.award_criteria = AWARD_CRITERIA
         self.scorer = CriteriaScorer()
+        self.calibrator = RankCalibrator()
     
-    def score_achievements(self, achievement_data: Dict) -> Dict[str, float]:
+    def score_achievements(self, achievement_data: Dict, awardee_rank: Optional[str] = None) -> Dict[str, float]:
         """
         Enhanced scoring with comprehensive null safety and new field support.
         
         Args:
             achievement_data: Dictionary containing achievement information
+            awardee_rank: Optional rank of the awardee for calibration
             
         Returns:
             Dictionary of scores for each criterion
@@ -90,6 +93,20 @@ class AwardEngine:
 
             # Calculate weighted total
             scores["total_weighted"] = self._calculate_weighted_total(scores)
+
+            # Apply rank calibration if rank is provided
+            if awardee_rank:
+                logger.info(f"Applying rank calibration for {awardee_rank}")
+                calibrated_scores, calibration_notes = self.calibrator.calibrate_scores(
+                    scores, awardee_rank, achievement_data
+                )
+                
+                # Log calibration adjustments
+                for criterion, note in calibration_notes.items():
+                    if note:
+                        logger.info(f"  {criterion}: {note}")
+                
+                scores = calibrated_scores
 
             # Log scoring results
             self._log_scoring_results(achievement_data, scores, combined_text)
