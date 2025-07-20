@@ -303,11 +303,13 @@ class RankCalibrator:
         }
         
         expected_level = max(scope_hierarchy.get(word, 0) for word in expected_scope.split('/'))
-        actual_level = max(scope_hierarchy.get(word, 0) for word in actual_scope.split() 
-                          if word in scope_hierarchy)
         
-        if actual_level == 0:
-            actual_level = 1  # Default to individual
+        # Handle empty scope or no matching words
+        scope_words = [word for word in actual_scope.split() if word in scope_hierarchy]
+        if scope_words:
+            actual_level = max(scope_hierarchy.get(word, 0) for word in scope_words)
+        else:
+            actual_level = 1  # Default to individual if no scope found
         
         # Calculate calibration - EVEN MORE STRINGENT
         level_diff = actual_level - expected_level
