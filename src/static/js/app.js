@@ -92,9 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileUpload);
     
-    // Rank selection event listener
-    awardeeRank.addEventListener('change', updateRankExpectations);
-    
     generateBtn.addEventListener('click', () => {
         // Debug: Check session state first
         fetch('/api/debug/session')
@@ -1016,44 +1013,5 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {
             console.error('Error parsing saved session:', e);
         }
-    }
-    
-    function updateRankExpectations() {
-        const rankExpectationsDiv = document.getElementById('rankExpectations');
-        const selectedRank = awardeeRank.value;
-        
-        if (!selectedRank) {
-            rankExpectationsDiv.textContent = '';
-            return;
-        }
-        
-        // Define rank expectations
-        const rankExpectations = {
-            // Enlisted
-            'PO3': 'Expected to lead 1-3 people, unit-level impact',
-            'PO2': 'Expected to lead 3-8 people, department-level impact',
-            'PO1': 'Expected to lead 5-15 people, department-level impact',
-            'CPO': 'Expected to lead 10-30 people, unit-level impact',
-            'SCPO': 'Expected to lead 20-50 people, unit/sector impact',
-            'MCPO': 'Expected to lead 30-100 people, unit/sector impact',
-            // Warrant Officers
-            'CWO2': 'Technical leadership of 5-20 people, unit-level impact',
-            'CWO3': 'Technical leadership of 10-30 people, unit/sector impact',
-            'CWO4': 'Technical leadership of 15-40 people, sector-level impact',
-            // Officers
-            'ENS': 'Division officer, 5-15 people, unit-level impact',
-            'LTJG': 'Division officer, 10-25 people, unit-level impact',
-            'LT': 'Department head, 15-40 people, unit/sector impact',
-            'LCDR': 'Department head/XO, 30-80 people, sector-level impact',
-            'CDR': 'CO of cutter/unit, 50-200 people, sector/district impact',
-            'CAPT': 'CO of major unit/sector, 100-500 people, district/area impact',
-            'RDML': 'District/Area leadership, 500-2000 people, area/CG-wide impact',
-            'RADM': 'Major command, 1000-5000 people, CG-wide impact',
-            'VADM': 'Vice Commandant level, 5000-15000 people, CG/national impact',
-            'ADM': 'Commandant, 10000-40000 people, national/international impact'
-        };
-        
-        const expectation = rankExpectations[selectedRank] || '';
-        rankExpectationsDiv.textContent = expectation ? `Typical expectations: ${expectation}` : '';
     }
 });

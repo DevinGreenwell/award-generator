@@ -53,14 +53,14 @@ EXPECTED_LEADERSHIP = {
     "CPO": (10, 30),   # Lead 10-30 people
     "SCPO": (20, 50),  # Lead 20-50 people
     "MCPO": (30, 100), # Lead 30-100 people
-    "CWO2": (5, 20),   # Technical leadership
-    "CWO3": (10, 30),  # Technical leadership
-    "CWO4": (15, 40),  # Technical leadership
-    "ENS": (5, 15),    # Division officer
-    "LTJG": (10, 25),  # Division officer
-    "LT": (15, 40),    # Department head
-    "LCDR": (30, 80),  # Department head/XO
-    "CDR": (50, 200),  # CO of cutter/unit
+    "CWO2": (2, 10),   # Technical leadership - halved
+    "CWO3": (5, 15),   # Technical leadership - halved
+    "CWO4": (7, 20),   # Technical leadership - halved
+    "ENS": (2, 8),     # Division officer - halved
+    "LTJG": (5, 12),   # Division officer - halved
+    "LT": (7, 20),     # Department head - halved
+    "LCDR": (15, 40),  # Department head/XO - halved
+    "CDR": (40, 200),  # CO of cutter/unit - adjusted to 40-200
     "CAPT": (100, 500),# CO of major unit/sector
     "RDML": (500, 2000), # District/Area leadership
     "RADM": (1000, 5000), # Major command
