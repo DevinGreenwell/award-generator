@@ -164,8 +164,8 @@ class AwardEngine:
             total_weighted += score * weight
             weight_sum += weight
 
-        # Prevent divide-by-zero and normalize against a 5-point max for each weighted criterion
-        percent = (total_weighted / (weight_sum * 5) * 100) if weight_sum else 0
+        # Prevent divide-by-zero and normalize against a 10-point max for each weighted criterion
+        percent = (total_weighted / (weight_sum * 10) * 100) if weight_sum else 0
         return round(percent, 1)
     
     def _log_scoring_results(self, achievement_data: Dict, scores: Dict[str, float], combined_text: str):
@@ -177,7 +177,7 @@ class AwardEngine:
         
         for key, value in scores.items():
             if key != "total_weighted":
-                logger.info(f"  {key}: {value}/5.0")
+                logger.info(f"  {key}: {value}/10.0")
         logger.info(f"TOTAL WEIGHTED SCORE: {scores['total_weighted']}")
     
     def recommend_award(self, scores: Dict[str, float]) -> Dict:
@@ -229,8 +229,8 @@ class AwardEngine:
                 key_scores = [scores.get(c, 0) for c in key_criteria]
                 avg_key_score = sum(key_scores) / len(key_scores)
                 
-                # Require average of key criteria to be at least 3.0 for these top awards
-                if avg_key_score < 3.0:
+                # Require average of key criteria to be at least 6.0 for these top awards (10-point scale)
+                if avg_key_score < 6.0:
                     meets_requirements = False
                     logger.debug(f"  {award} key criteria average too low: {avg_key_score:.2f}")
 
@@ -318,12 +318,12 @@ class AwardEngine:
         for criterion, score in scores.items():
             if criterion != 'total_weighted' and score > 0:
                 formatted_name = criterion.replace('_', ' ').title()
-                if score >= 4:
-                    high_scores.append(f"{formatted_name}: {score}/5")
-                elif score >= 2:
-                    medium_scores.append(f"{formatted_name}: {score}/5")
+                if score >= 8:
+                    high_scores.append(f"{formatted_name}: {score}/10")
+                elif score >= 4:
+                    medium_scores.append(f"{formatted_name}: {score}/10")
                 else:
-                    low_scores.append(f"{formatted_name}: {score}/5")
+                    low_scores.append(f"{formatted_name}: {score}/10")
         
         if high_scores:
             explanation += f"<p><strong>Strong Areas:</strong> {', '.join(high_scores)}</p>"

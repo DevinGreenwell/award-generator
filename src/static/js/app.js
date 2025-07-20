@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     for (const [key, value] of Object.entries(data.current_scores)) {
                         if (key !== 'total_weighted' && value > 0) {
                             const displayName = criteriaNames[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                            improvementHtml += `<tr><td>${displayName}</td><td>${value.toFixed(1)}/5.0</td></tr>`;
+                            improvementHtml += `<tr><td>${displayName}</td><td>${value.toFixed(1)}/10.0</td></tr>`;
                         }
                     }
                     
@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
             for (const [key, value] of Object.entries(scores)) {
                 if (key !== 'total_weighted' && value > 0) {
                     const displayName = criteriaNames[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    scoreHtml += `<tr><td>${displayName}</td><td>${value.toFixed(1)}/5.0</td></tr>`;
+                    scoreHtml += `<tr><td>${displayName}</td><td>${value.toFixed(1)}/10.0</td></tr>`;
                 }
             }
             

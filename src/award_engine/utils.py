@@ -99,6 +99,6 @@ def extract_quantifiable_metrics(text):
     return metrics
 
 
-def normalize_score(score, max_score=5.0):
-    """Normalize a score to ensure it's within bounds."""
+def normalize_score(score, max_score=10.0):
+    """Normalize a score to ensure it's within bounds (0-10 scale)."""
     return round(min(max_score, max(0, score)), 1)

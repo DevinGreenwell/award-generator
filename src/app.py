@@ -843,7 +843,7 @@ def generate_docx_export(export_data):
         # Header row
         header_row = score_table.rows[0]
         header_row.cells[0].text = 'Criterion'
-        header_row.cells[1].text = 'Score (out of 5)'
+        header_row.cells[1].text = 'Score (out of 10)'
         
         # Make header bold
         for cell in header_row.cells:
@@ -854,7 +854,7 @@ def generate_docx_export(export_data):
             if criterion != 'total_weighted' and score > 0:
                 row = score_table.add_row()
                 row.cells[0].text = criterion.replace('_', ' ').title()
-                row.cells[1].text = f"{score}/5.0"
+                row.cells[1].text = f"{score}/10.0"
         
         doc.add_paragraph()
     

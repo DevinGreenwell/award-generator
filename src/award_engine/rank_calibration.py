@@ -278,7 +278,7 @@ class RankCalibrator:
                 calibration_factor = 0.7  # Moderate penalty for below expectations
                 note = f"Led {actual_led} (below {rank} norm of {expected_min}-{expected_max})"
         
-        calibrated_score = min(5.0, score * calibration_factor)
+        calibrated_score = min(10.0, score * calibration_factor)
         return calibrated_score, note
     
     def _calibrate_scope(self, score: float, rank: str, achievement_data: Dict) -> Tuple[float, str]:
@@ -336,7 +336,7 @@ class RankCalibrator:
             calibration_factor = 0.7  # Moderate penalty
             note = f"Below expected scope for {rank}"
         
-        calibrated_score = min(5.0, score * calibration_factor)
+        calibrated_score = min(10.0, score * calibration_factor)
         return calibrated_score, note
     
     def _calibrate_quantifiable(self, score: float, rank: str, achievement_data: Dict) -> Tuple[float, str]:
@@ -373,7 +373,7 @@ class RankCalibrator:
             calibration_factor = 1.0
             note = ""
         
-        calibrated_score = min(5.0, score * calibration_factor)
+        calibrated_score = min(10.0, score * calibration_factor)
         return calibrated_score, note
     
     def _calibrate_impact(self, score: float, rank: str, achievement_data: Dict) -> Tuple[float, str]:
@@ -399,7 +399,7 @@ class RankCalibrator:
             calibration_factor = 1.0
             note = ""
         
-        calibrated_score = min(5.0, score * calibration_factor)
+        calibrated_score = min(10.0, score * calibration_factor)
         return calibrated_score, note
     
     def _calibrate_valor(self, score: float, rank: str, achievement_data: Dict) -> Tuple[float, str]:
@@ -419,7 +419,7 @@ class RankCalibrator:
             calibration_factor = 1.0
             note = ""
         
-        calibrated_score = min(5.0, score * calibration_factor)
+        calibrated_score = min(10.0, score * calibration_factor)
         return calibrated_score, note
     
     def _build_combined_text(self, achievement_data: Dict) -> str:
@@ -449,5 +449,5 @@ class RankCalibrator:
             total_weighted += score * weight
             weight_sum += weight
         
-        percent = (total_weighted / (weight_sum * 5) * 100) if weight_sum else 0
+        percent = (total_weighted / (weight_sum * 10) * 100) if weight_sum else 0
         return round(percent, 1)
