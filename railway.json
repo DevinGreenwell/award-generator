@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python -m gunicorn --chdir src wsgi:application --bind 0.0.0.0:$PORT",
+    "startCommand": "python -m gunicorn --config gunicorn_config.py --chdir src wsgi:application",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

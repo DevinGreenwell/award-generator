@@ -50,8 +50,12 @@ class OpenAIClient:
         if not self.api_key:
             raise ValueError("OpenAI API key not found. Set OPENAI_API_KEY environment variable.")
         
-        # Initialize the new OpenAI client
-        self.client = OpenAI(api_key=self.api_key)
+        # Initialize the new OpenAI client with increased timeout for O4 models
+        self.client = OpenAI(
+            api_key=self.api_key,
+            timeout=90.0,  # Increased timeout for O4 reasoning models
+            max_retries=0  # We handle retries ourselves
+        )
         self.model = os.getenv("OPENAI_MODEL", "o4-mini-2025-04-16")
         self.max_retries = 3
         self.retry_delay = 1  # seconds
@@ -132,7 +136,16 @@ class OpenAIClient:
                     if max_tokens:
                         kwargs["max_tokens"] = max_tokens
                 
+                # Log API call details
+                logger.info(f"Making OpenAI API call (attempt {attempt + 1}/{self.max_retries}) for {context}")
+                start_time = time.time()
+                
                 response = self.client.chat.completions.create(**kwargs)
+                
+                # Log successful response time
+                elapsed_time = time.time() - start_time
+                logger.info(f"OpenAI API call completed in {elapsed_time:.2f}s for {context}")
+                
                 return response.choices[0].message.model_dump()
                 
             except RateLimitError as e:
