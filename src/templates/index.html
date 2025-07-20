@@ -298,7 +298,35 @@
                 </div>
                 <div class="awardee-field">
                     <label for="awardeeRank">Rank:</label>
-                    <input type="text" id="awardeeRank" name="rank" placeholder="Rank/Grade">
+                    <select id="awardeeRank" name="rank" style="width: 100%; padding: 8px; font-size: 14px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">Select Rank</option>
+                        <optgroup label="Enlisted">
+                            <option value="PO3">PO3 - Petty Officer Third Class (E-4)</option>
+                            <option value="PO2">PO2 - Petty Officer Second Class (E-5)</option>
+                            <option value="PO1">PO1 - Petty Officer First Class (E-6)</option>
+                            <option value="CPO">CPO - Chief Petty Officer (E-7)</option>
+                            <option value="SCPO">SCPO - Senior Chief Petty Officer (E-8)</option>
+                            <option value="MCPO">MCPO - Master Chief Petty Officer (E-9)</option>
+                        </optgroup>
+                        <optgroup label="Warrant Officers">
+                            <option value="CWO2">CWO2 - Chief Warrant Officer 2 (W-2)</option>
+                            <option value="CWO3">CWO3 - Chief Warrant Officer 3 (W-3)</option>
+                            <option value="CWO4">CWO4 - Chief Warrant Officer 4 (W-4)</option>
+                        </optgroup>
+                        <optgroup label="Officers">
+                            <option value="ENS">ENS - Ensign (O-1)</option>
+                            <option value="LTJG">LTJG - Lieutenant Junior Grade (O-2)</option>
+                            <option value="LT">LT - Lieutenant (O-3)</option>
+                            <option value="LCDR">LCDR - Lieutenant Commander (O-4)</option>
+                            <option value="CDR">CDR - Commander (O-5)</option>
+                            <option value="CAPT">CAPT - Captain (O-6)</option>
+                            <option value="RDML">RDML - Rear Admiral Lower Half (O-7)</option>
+                            <option value="RADM">RADM - Rear Admiral (O-8)</option>
+                            <option value="VADM">VADM - Vice Admiral (O-9)</option>
+                            <option value="ADM">ADM - Admiral (O-10)</option>
+                        </optgroup>
+                    </select>
+                    <div id="rankExpectations" style="margin-top: 8px; font-size: 12px; color: #666; font-style: italic;"></div>
                 </div>
                 <div class="awardee-field">
                     <label for="awardeeUnit">Unit:</label>
