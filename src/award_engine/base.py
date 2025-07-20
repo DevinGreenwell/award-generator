@@ -206,13 +206,22 @@ class AwardEngine:
             min_reqs = self.award_criteria[award].get('min_requirements', {})
             meets_requirements = True
 
-            # Composite Big-Three gate
-            big_three = ("leadership", "impact", "scope")
-            big3_passes = sum(1 for crit in big_three
-                            if scores.get(crit, 0) >= min_reqs.get(crit, 0))
+            # MORE STRINGENT: Check ALL minimum requirements individually
+            for criterion, min_score in min_reqs.items():
+                if scores.get(criterion, 0) < min_score:
+                    meets_requirements = False
+                    logger.debug(f"  {award} failed on {criterion}: {scores.get(criterion, 0)} < {min_score}")
+                    break
             
-            if big3_passes < 2:
-                meets_requirements = False
+            # Additionally, for higher awards, require excellence in key areas
+            if award in ["Distinguished Service Medal", "Legion of Merit", "Meritorious Service Medal"]:
+                # Require ALL of the big three to meet minimums
+                big_three = ("leadership", "impact", "scope")
+                for criterion in big_three:
+                    if criterion in min_reqs and scores.get(criterion, 0) < min_reqs[criterion]:
+                        meets_requirements = False
+                        logger.debug(f"  {award} failed big-three check on {criterion}")
+                        break
 
             if meets_requirements:
                 return {"award": award, "score": total, "threshold_met": True}

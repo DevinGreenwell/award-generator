@@ -258,18 +258,21 @@ class RankCalibrator:
                 calibration_factor = 0.5
                 note = f"No leadership expected at {rank} level"
         else:
-            # Compare to expectations
-            if actual_led >= expected_max * 1.5:
-                calibration_factor = 1.3
-                note = f"Led {actual_led} (exceeds {rank} norm of {expected_min}-{expected_max})"
+            # Compare to expectations - MORE STRINGENT
+            if actual_led >= expected_max * 2.0:  # Must double expectations for bonus
+                calibration_factor = 1.2  # Reduced from 1.3
+                note = f"Led {actual_led} (significantly exceeds {rank} norm of {expected_min}-{expected_max})"
+            elif actual_led >= expected_max * 1.5:
+                calibration_factor = 1.1  # Small bonus
+                note = f"Led {actual_led} (exceeds {rank} norm)"
             elif actual_led >= expected_max:
-                calibration_factor = 1.0
-                note = ""
+                calibration_factor = 0.9  # Meeting max is just "good"
+                note = f"Led {actual_led} (meets upper {rank} expectations)"
             elif actual_led >= expected_min:
-                calibration_factor = 0.8
-                note = f"Led {actual_led} (meets {rank} expectations)"
+                calibration_factor = 0.7  # Reduced from 0.8
+                note = f"Led {actual_led} (meets minimum {rank} expectations)"
             else:
-                calibration_factor = 0.6
+                calibration_factor = 0.5  # Reduced from 0.6
                 note = f"Led {actual_led} (below {rank} norm of {expected_min}-{expected_max})"
         
         calibrated_score = min(5.0, score * calibration_factor)
@@ -303,24 +306,30 @@ class RankCalibrator:
         if actual_level == 0:
             actual_level = 1  # Default to individual
         
-        # Calculate calibration
+        # Calculate calibration - MORE STRINGENT
         level_diff = actual_level - expected_level
         
-        if level_diff >= 3:
-            calibration_factor = 1.4
+        if level_diff >= 4:  # Must be 4+ levels above for significant bonus
+            calibration_factor = 1.3  # Reduced from 1.4
             note = f"Far exceeds {rank} scope expectations"
+        elif level_diff >= 3:
+            calibration_factor = 1.2  # Reduced
+            note = f"Significantly exceeds {rank} scope expectations"
         elif level_diff >= 2:
-            calibration_factor = 1.2
+            calibration_factor = 1.1  # Reduced from 1.2
             note = f"Exceeds {rank} scope expectations"
+        elif level_diff >= 1:
+            calibration_factor = 0.95  # Meeting expectations is just OK
+            note = f"Slightly above {rank} scope expectations"
         elif level_diff >= 0:
-            calibration_factor = 1.0
-            note = ""
+            calibration_factor = 0.85  # At expected level = slight penalty
+            note = f"Meets {rank} scope expectations"
         elif level_diff >= -1:
-            calibration_factor = 0.8
-            note = f"Slightly below {rank} scope expectations"
+            calibration_factor = 0.7  # Reduced from 0.8
+            note = f"Below {rank} scope expectations"
         else:
-            calibration_factor = 0.6
-            note = f"Below expected scope for {rank}"
+            calibration_factor = 0.5  # Reduced from 0.6
+            note = f"Significantly below expected scope for {rank}"
         
         calibrated_score = min(5.0, score * calibration_factor)
         return calibrated_score, note
@@ -329,18 +338,32 @@ class RankCalibrator:
         """Calibrate quantifiable results based on rank expectations."""
         multiplier = EXPECTED_IMPACT_MULTIPLIER.get(rank, 1.0)
         
-        # Junior ranks get bonus for ANY quantifiable results
+        # Junior ranks get smaller bonus for quantifiable results
         if multiplier < 1.0 and score > 0:
-            calibration_factor = 1.2
-            note = f"Quantifiable results impressive for {rank}"
+            if score >= 3.0:  # Need significant quantifiable results for bonus
+                calibration_factor = 1.15  # Reduced from 1.2
+                note = f"Strong quantifiable results for {rank}"
+            else:
+                calibration_factor = 1.05  # Minimal bonus
+                note = f"Some quantifiable results for {rank}"
         # Senior ranks need MORE impressive numbers
-        elif multiplier > 5.0:
-            if score >= 4.0:
+        elif multiplier > 5.0:  # O-4 and above
+            if score >= 4.5:
+                calibration_factor = 1.0
+                note = ""
+            elif score >= 4.0:
+                calibration_factor = 0.85  # Good but not great
+                note = f"Good quantifiable impact for {rank} level"
+            else:
+                calibration_factor = 0.6  # Reduced from 0.7
+                note = f"Higher quantifiable impact expected at {rank} level"
+        elif multiplier > 2.0:  # Mid-level
+            if score >= 3.5:
                 calibration_factor = 1.0
                 note = ""
             else:
-                calibration_factor = 0.7
-                note = f"Higher quantifiable impact expected at {rank} level"
+                calibration_factor = 0.8
+                note = f"More quantifiable results expected at {rank} level"
         else:
             calibration_factor = 1.0
             note = ""
