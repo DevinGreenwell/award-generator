@@ -739,13 +739,35 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set content
         titleEl.textContent = award;
         
-        // Format the citation for better display
-        // The citation may come as a single paragraph or with line breaks
-        // We'll display it as a clean paragraph for readability
+        // Format the citation preserving line breaks for 125-character lines
+        // Convert newlines to <br> tags and escape HTML
+        const escapedCitation = citation
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;')
+            .replace(/\n/g, '<br>');
+        
+        // Calculate line count and character info
+        const lines = citation.split('\n');
+        const lineCount = lines.length;
+        const maxLineLength = Math.max(...lines.map(line => line.length));
+        const totalChars = citation.length;
+        
+        // Add character count info for Achievement Medal
+        let charInfo = '';
+        if (award.includes('Achievement Medal')) {
+            charInfo = `<div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                Lines: ${lineCount} | Max chars/line: ${maxLineLength} | Total chars: ${totalChars}
+            </div>`;
+        }
+        
         const formattedCitation = `
-            <div class="citation-content">
-                <p>${citation}</p>
+            <div class="citation-content" style="font-family: monospace; white-space: pre-wrap;">
+                ${escapedCitation}
             </div>
+            ${charInfo}
         `;
         citationEl.innerHTML = formattedCitation;
         

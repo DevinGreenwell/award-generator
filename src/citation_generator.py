@@ -370,41 +370,59 @@ class CitationGenerator:
             return None
     
     def _format_by_characters(self, citation: str, award_type: str) -> str:
-        """Format citation based on character count instead of line breaks."""
+        """Format citation based on character count, breaking into 125-character lines."""
         max_chars = self.CHARACTER_LIMITS.get(award_type, 1140)
+        chars_per_line = 125
         
-        # If citation fits within character limit, return as is
-        if len(citation) <= max_chars:
-            return citation
-        
-        # If too long, we need to trim intelligently
-        sentences = self._split_into_sentences(citation)
-        
-        # Always keep opening and closing
-        if len(sentences) < 3:
-            # If we can't split properly, truncate at word boundary
-            if len(citation) > max_chars:
+        # First check if citation exceeds total character limit
+        if len(citation) > max_chars:
+            # Trim intelligently by sentences
+            sentences = self._split_into_sentences(citation)
+            
+            if len(sentences) < 3:
+                # If we can't split properly, truncate at word boundary
                 words = citation[:max_chars].split()
-                return ' '.join(words[:-1]) + '...'
-            return citation
-        
-        opening = sentences[0]
-        closing = sentences[-1]
-        body_sentences = sentences[1:-1]
-        
-        # Build citation keeping within character limit
-        current_citation = opening
-        
-        for sentence in body_sentences:
-            test_citation = current_citation + " " + sentence
-            if len(test_citation + " " + closing) <= max_chars:
-                current_citation = test_citation
+                citation = ' '.join(words[:-1]) + '...'
             else:
-                break
+                # Keep opening and closing, trim middle
+                opening = sentences[0]
+                closing = sentences[-1]
+                body_sentences = sentences[1:-1]
+                
+                current_citation = opening
+                for sentence in body_sentences:
+                    test_citation = current_citation + " " + sentence
+                    if len(test_citation + " " + closing) <= max_chars:
+                        current_citation = test_citation
+                    else:
+                        break
+                
+                citation = current_citation + " " + closing
         
-        current_citation += " " + closing
+        # Now format into lines of 125 characters each
+        lines = []
+        words = citation.split()
+        current_line = ""
         
-        return current_citation
+        for word in words:
+            # Check if adding this word would exceed line limit
+            if current_line and len(current_line + " " + word) > chars_per_line:
+                # Current line is full, save it and start new line
+                lines.append(current_line)
+                current_line = word
+            else:
+                # Add word to current line
+                if current_line:
+                    current_line += " " + word
+                else:
+                    current_line = word
+        
+        # Don't forget the last line
+        if current_line:
+            lines.append(current_line)
+        
+        # Join lines with newlines and return
+        return '\n'.join(lines)
         
     def _build_narrative_body(self, achievement_data: Dict, rank: str, last_name: str, pronoun: str) -> List[str]:
         """Fallback to original narrative body builder."""
@@ -645,6 +663,14 @@ class CitationGenerator:
         """Clean text for use in narrative."""
         # Remove leading/trailing whitespace and periods
         text = text.strip().rstrip('.')
+        
+        # Remove JSON artifacts like brackets, quotes, etc.
+        text = text.replace('[', '').replace(']', '')
+        text = text.replace('"', '').replace("'", '')
+        text = text.replace('{', '').replace('}', '')
+        
+        # Clean up any double spaces
+        text = ' '.join(text.split())
         
         # Ensure lowercase for mid-sentence flow (unless it starts with an acronym)
         if text and text[0].isupper() and not text.split()[0].isupper():

@@ -428,11 +428,8 @@ def api_finalize():
     # Generate final citation
     citation = openai_client.draft_award(award, achievement_data, awardee_info)
     
-    # Format citation for better display in the UI
-    # The citation comes with line breaks for the document, but we want it readable in the app
-    display_citation = citation.replace('\n', ' ')
-    # Clean up extra spaces
-    display_citation = ' '.join(display_citation.split())
+    # Don't remove line breaks - we need them for proper 125-character line formatting
+    display_citation = citation
     
     # Store finalized award in file-based session
     finalized_data = {
