@@ -52,12 +52,12 @@ class OpenAIClient:
         
         # Initialize the new OpenAI client
         self.client = OpenAI(api_key=self.api_key)
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini-2024-07-18")
+        self.model = os.getenv("OPENAI_MODEL", "o4-mini-2025-04-16")
         self.max_retries = 3
         self.retry_delay = 1  # seconds
         
         # Check if using a reasoning model (O1 or O4 series)
-        self.is_reasoning_model = self.model.startswith(('o1-preview', 'o1-mini', 'o4-preview', 'o4-mini'))
+        self.is_reasoning_model = self.model.startswith(('o1-preview', 'o1-mini', 'o4-preview', 'o4-mini', 'o4-mini-2025'))
 
     def _handle_api_error(self, error: Exception, context: str) -> Dict:
         """Handle various OpenAI API errors with appropriate responses."""
@@ -115,6 +115,7 @@ class OpenAIClient:
             
             messages = processed_messages
             logger.info(f"Using reasoning model {self.model}, converted {len(messages)} messages")
+            logger.debug(f"O4 model detected - temperature and max_tokens parameters will be omitted")
         else:
             logger.info(f"Using standard model {self.model}")
         
@@ -287,8 +288,17 @@ Return ONLY the JSON object with no additional text, formatting, or explanations
             
             content = response.get("content", "").strip()
             
-            # Clean up any markdown formatting
+            # Clean up any markdown formatting (O4 models often add more formatting)
             content = content.replace('```json', '').replace('```', '').strip()
+            
+            # O4 models might add additional explanation - extract just the JSON
+            if self.is_reasoning_model and '{' in content and '}' in content:
+                # Find the JSON object in the response
+                start_idx = content.find('{')
+                end_idx = content.rfind('}') + 1
+                if start_idx != -1 and end_idx > start_idx:
+                    content = content[start_idx:end_idx]
+                    logger.debug("Extracted JSON from O4 reasoning model response")
             
             # Parse the JSON response
             data = json.loads(content)
