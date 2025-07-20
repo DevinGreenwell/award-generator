@@ -258,21 +258,24 @@ class RankCalibrator:
                 calibration_factor = 0.5
                 note = f"No leadership expected at {rank} level"
         else:
-            # Compare to expectations - MORE STRINGENT
-            if actual_led >= expected_max * 2.0:  # Must double expectations for bonus
-                calibration_factor = 1.2  # Reduced from 1.3
-                note = f"Led {actual_led} (significantly exceeds {rank} norm of {expected_min}-{expected_max})"
+            # Compare to expectations - EVEN MORE STRINGENT
+            if actual_led >= expected_max * 2.5:  # Must far exceed for any bonus
+                calibration_factor = 1.15  # Small bonus only
+                note = f"Led {actual_led} (far exceeds {rank} norm of {expected_min}-{expected_max})"
+            elif actual_led >= expected_max * 2.0:
+                calibration_factor = 1.05  # Tiny bonus
+                note = f"Led {actual_led} (significantly exceeds {rank} norm)"
             elif actual_led >= expected_max * 1.5:
-                calibration_factor = 1.1  # Small bonus
+                calibration_factor = 0.95  # Still a small penalty
                 note = f"Led {actual_led} (exceeds {rank} norm)"
             elif actual_led >= expected_max:
-                calibration_factor = 0.9  # Meeting max is just "good"
+                calibration_factor = 0.85  # Penalty for just meeting max
                 note = f"Led {actual_led} (meets upper {rank} expectations)"
             elif actual_led >= expected_min:
-                calibration_factor = 0.7  # Reduced from 0.8
+                calibration_factor = 0.65  # Bigger penalty
                 note = f"Led {actual_led} (meets minimum {rank} expectations)"
             else:
-                calibration_factor = 0.5  # Reduced from 0.6
+                calibration_factor = 0.45  # Severe penalty
                 note = f"Led {actual_led} (below {rank} norm of {expected_min}-{expected_max})"
         
         calibrated_score = min(5.0, score * calibration_factor)
@@ -306,29 +309,32 @@ class RankCalibrator:
         if actual_level == 0:
             actual_level = 1  # Default to individual
         
-        # Calculate calibration - MORE STRINGENT
+        # Calculate calibration - EVEN MORE STRINGENT
         level_diff = actual_level - expected_level
         
-        if level_diff >= 4:  # Must be 4+ levels above for significant bonus
-            calibration_factor = 1.3  # Reduced from 1.4
+        if level_diff >= 5:  # Must be 5+ levels above for any real bonus
+            calibration_factor = 1.2  # Modest bonus
+            note = f"Extraordinarily exceeds {rank} scope expectations"
+        elif level_diff >= 4:
+            calibration_factor = 1.1  # Small bonus
             note = f"Far exceeds {rank} scope expectations"
         elif level_diff >= 3:
-            calibration_factor = 1.2  # Reduced
+            calibration_factor = 1.0  # No bonus for 3 levels above
             note = f"Significantly exceeds {rank} scope expectations"
         elif level_diff >= 2:
-            calibration_factor = 1.1  # Reduced from 1.2
+            calibration_factor = 0.9  # Small penalty even for exceeding
             note = f"Exceeds {rank} scope expectations"
         elif level_diff >= 1:
-            calibration_factor = 0.95  # Meeting expectations is just OK
+            calibration_factor = 0.8  # Penalty
             note = f"Slightly above {rank} scope expectations"
         elif level_diff >= 0:
-            calibration_factor = 0.85  # At expected level = slight penalty
+            calibration_factor = 0.7  # Bigger penalty for meeting expectations
             note = f"Meets {rank} scope expectations"
         elif level_diff >= -1:
-            calibration_factor = 0.7  # Reduced from 0.8
+            calibration_factor = 0.55  # Severe penalty
             note = f"Below {rank} scope expectations"
         else:
-            calibration_factor = 0.5  # Reduced from 0.6
+            calibration_factor = 0.4  # Very severe penalty
             note = f"Significantly below expected scope for {rank}"
         
         calibrated_score = min(5.0, score * calibration_factor)
