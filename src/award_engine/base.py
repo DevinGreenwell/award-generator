@@ -204,24 +204,35 @@ class AwardEngine:
 
             # Next, check minimum requirements
             min_reqs = self.award_criteria[award].get('min_requirements', {})
-            meets_requirements = True
-
-            # MORE STRINGENT: Check ALL minimum requirements individually
-            for criterion, min_score in min_reqs.items():
-                if scores.get(criterion, 0) < min_score:
-                    meets_requirements = False
-                    logger.debug(f"  {award} failed on {criterion}: {scores.get(criterion, 0)} < {min_score}")
-                    break
             
-            # Additionally, for higher awards, require excellence in key areas
-            if award in ["Distinguished Service Medal", "Legion of Merit", "Meritorious Service Medal"]:
-                # Require ALL of the big three to meet minimums
-                big_three = ("leadership", "impact", "scope")
-                for criterion in big_three:
-                    if criterion in min_reqs and scores.get(criterion, 0) < min_reqs[criterion]:
-                        meets_requirements = False
-                        logger.debug(f"  {award} failed big-three check on {criterion}")
-                        break
+            # Count how many minimum requirements are met
+            requirements_met = 0
+            total_requirements = len(min_reqs)
+            
+            for criterion, min_score in min_reqs.items():
+                if scores.get(criterion, 0) >= min_score:
+                    requirements_met += 1
+                else:
+                    logger.debug(f"  {award} missed {criterion}: {scores.get(criterion, 0)} < {min_score}")
+            
+            # Require meeting at least 2/3 of minimum requirements (more balanced)
+            required_count = max(1, int(total_requirements * 0.67))  # At least 67% of requirements
+            meets_requirements = requirements_met >= required_count
+            
+            if not meets_requirements:
+                logger.debug(f"  {award} only met {requirements_met}/{total_requirements} requirements (need {required_count})")
+            
+            # For the highest awards, ensure key criteria are strong
+            if award in ["Distinguished Service Medal", "Legion of Merit"] and meets_requirements:
+                # Double-check that leadership, impact, and scope are all reasonably strong
+                key_criteria = ["leadership", "impact", "scope"]
+                key_scores = [scores.get(c, 0) for c in key_criteria]
+                avg_key_score = sum(key_scores) / len(key_scores)
+                
+                # Require average of key criteria to be at least 3.0 for these top awards
+                if avg_key_score < 3.0:
+                    meets_requirements = False
+                    logger.debug(f"  {award} key criteria average too low: {avg_key_score:.2f}")
 
             if meets_requirements:
                 return {"award": award, "score": total, "threshold_met": True}
